@@ -98,7 +98,9 @@ export class DriverResponse extends BaseResponseType {
   @ApiProperty()
   deviceModel: string;
   @ApiProperty()
-  lastActivityDate: number;
+  lastActivityDate: number;  
+  @ApiProperty()
+  createdAt: string;
 
   constructor(driverDocument: DriverDocument | any) {
     super();
@@ -132,5 +134,6 @@ export class DriverResponse extends BaseResponseType {
     this.eldType = driverDocument.eldType;
     this.deviceVersion = driverDocument.deviceVersion;
     this.deviceModel = driverDocument.deviceModel;
+    this.createdAt = driverDocument.createdAt;
   }
 }
