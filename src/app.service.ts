@@ -294,7 +294,7 @@ export class AppService extends BaseService<DriverDocument> {
         driverName:
           result['_doc']['firstName'] + ' ' + result['_doc']['lastName'],
         vehicleName: driver.vehicleId
-          ? result['_doc']['vehicles'][0]['vehicleId']
+          ? result['_doc']['currentVehicle']
           : null,
         shippingId: '',
         signature: '',

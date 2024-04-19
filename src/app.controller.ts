@@ -596,7 +596,7 @@ export class AppController extends BaseController {
       }
 
       if (
-        editRequestData.vehicleId
+        editRequestData.vehicleId 
         &&
         driver.vehicleId != editRequestData.vehicleId // this code is to not update the vehicle every time driver gets update
       ) {
@@ -638,11 +638,12 @@ export class AppController extends BaseController {
           driverRequest.vehicles.splice(index, 1);
         }
       });
-      driverRequest.currentVehicle = vehicleDetails?.data?.vehicleId || null;
+      driverRequest.currentVehicle = vehicleDetails?.data?.vehicleId || driverRequest.currentVehicle;
       if (driver) {
         driverRequest['assignedVehicles'] = JSON.parse(
           JSON.stringify(driver['_doc'].assignedVehicles),
         );
+        // driverRequest['currentVehicle'] = vehicleDetails?.data
       } else {
         driverRequest['assignedVehicles'] = [];
       }
