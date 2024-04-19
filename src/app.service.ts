@@ -721,7 +721,7 @@ export class AppService extends BaseService<DriverDocument> {
   populateEld = async (id: string): Promise<any> => {
     try {
       const resp = await firstValueFrom(
-        this.deviceClient.send({ cmd: 'letIT_device_by_id' }, id),
+        this.deviceClient.send({ cmd: 'get_device_by_id' }, id),
       );
       if (resp.isError) {
         mapMessagePatternResponseToException(resp);
