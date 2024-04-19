@@ -598,15 +598,17 @@ export class AppController extends BaseController {
       if (
         editRequestData.vehicleId
         &&
-        driver.vehicleId != editRequestData.vehicleId// this code is to not update the vehicle every time driver gets update
+        driver.vehicleId != editRequestData.vehicleId // this code is to not update the vehicle every time driver gets update
       ) {
         option.$or.push({ vehicleId: editRequestData.vehicleId });
         vehicleDetails = await this.appService.populateVehicle(
           editRequestData.vehicleId,
         );
-        vehicleDetails.data['assignedDrivers'] = JSON.parse(
-          JSON.stringify(vehicleDetails?.data.assignedDrivers),
-        );
+        if (vehicleDetails.data && vehicleDetails.data?.assignedDrivers) {
+          vehicleDetails.data['assignedDrivers'] = JSON.parse(
+            JSON.stringify(vehicleDetails?.data.assignedDrivers),
+          );
+        }
       }
       const { requestedCoDriver, isCodriverUpdated } = await addAndUpdate(
         this.appService,
