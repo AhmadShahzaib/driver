@@ -305,13 +305,13 @@ export class AppService extends BaseService<DriverDocument> {
         tenantId: '',
       };
       // this.hosClient.connect();
-      try {
-        // const res =  firstValueFrom<MessagePatternResponseType>(
-        //   this.hosClient.send({ cmd: 'add_update_recordTable' }, recordMade),
-        // );
-      } catch (error) {
-        this.logger.error({ error });
-      }
+      // try {
+      //   // const res =  firstValueFrom<MessagePatternResponseType>(
+      //   //   this.hosClient.send({ cmd: 'add_update_recordTable' }, recordMade),
+      //   // );
+      // } catch (error) {
+      //   this.logger.error({ error });
+      // }
       // const resss = await firstValueFrom<MessagePatternResponseType>(
       //   this.hosClient.send({ cmd: 'get_recordTable' }, {driverID:driverId,date:''}),
       // );
