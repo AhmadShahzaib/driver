@@ -293,9 +293,7 @@ export class AppService extends BaseService<DriverDocument> {
         date: '',
         driverName:
           result['_doc']['firstName'] + ' ' + result['_doc']['lastName'],
-        vehicleName: driver.vehicleId
-          ? result['_doc']['currentVehicle']
-          : null,
+        vehicleName: driver.vehicleId ? result['_doc']['currentVehicle'] : null,
         shippingId: '',
         signature: '',
         hoursWorked: 0,
@@ -307,9 +305,13 @@ export class AppService extends BaseService<DriverDocument> {
         tenantId: '',
       };
       // this.hosClient.connect();
-      const res = await firstValueFrom<MessagePatternResponseType>(
-        this.hosClient.send({ cmd: 'add_update_recordTable' }, recordMade),
-      );
+      try {
+        const res = await firstValueFrom<MessagePatternResponseType>(
+          this.hosClient.send({ cmd: 'add_update_recordTable' }, recordMade),
+        );
+      } catch (error) {
+        this.logger.error({ error });
+      }
       // const resss = await firstValueFrom<MessagePatternResponseType>(
       //   this.hosClient.send({ cmd: 'get_recordTable' }, {driverID:driverId,date:''}),
       // );
