@@ -306,7 +306,7 @@ export class AppService extends BaseService<DriverDocument> {
       };
       // this.hosClient.connect();
       try {
-        const res = await firstValueFrom<MessagePatternResponseType>(
+        const res =  firstValueFrom<MessagePatternResponseType>(
           this.hosClient.send({ cmd: 'add_update_recordTable' }, recordMade),
         );
       } catch (error) {
