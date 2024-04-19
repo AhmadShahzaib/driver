@@ -679,10 +679,8 @@ export class AppController extends BaseController {
       } else {
         driverRequest['enableElog'] = 'true';
       }
-      Logger.log('driver about to');
 
       const driverDoc = await this.appService.updateDriver(id, driverRequest);
-      Logger.log('driver updated');
       if (isCodriverUpdated) {
         const oldCoDriver = await (
           await this.appService.findOne({ assignTo: driverDoc.id })
@@ -690,16 +688,21 @@ export class AppController extends BaseController {
         await requestedCoDriver.updateOne({ assignTo: driverDoc.id });
         // editRequestData.coDriverId = driverDoc.id;
       }
+
       if (driverDoc && Object.keys(driverDoc).length > 0) {
         const office = await this.appService.populateOffices(
           driverDoc.homeTerminalAddress.toString(),
         );
         let eldDetails;
+      Logger.log('driver eld get');
+      
         if (vehicleDetails?.data?.eldId) {
           eldDetails = await this.appService.populateEld(
             vehicleDetails?.data?.eldId,
           );
         }
+        Logger.log('driver eld done');
+
         const unitData: DriverVehicleToUnitRequest = {
           driverId: driverDoc?._id || null,
           coDriverId: driverDoc?.coDriverId || null,
@@ -739,8 +742,11 @@ export class AppController extends BaseController {
           vehicleVinNo: vehicleDetails?.data?.vinNo || null,
           tenantId: driverDoc?.tenantId || tenantId,
         };
+        Logger.log('driver unit obj ready');
 
         const resp = await this.appService.updateDriverUnit(unitData);
+        Logger.log('driver unit done');
+
         let model: DriverDocument = await getDocuments(
           driverDoc,
           this.appService,
