@@ -694,14 +694,12 @@ export class AppController extends BaseController {
           driverDoc.homeTerminalAddress.toString(),
         );
         let eldDetails;
-      Logger.log('driver eld get');
       
         if (vehicleDetails?.data?.eldId) {
           eldDetails = await this.appService.populateEld(
             vehicleDetails?.data?.eldId,
           );
         }
-        Logger.log('driver eld done');
 
         const unitData: DriverVehicleToUnitRequest = {
           driverId: driverDoc?._id || null,
@@ -742,10 +740,8 @@ export class AppController extends BaseController {
           vehicleVinNo: vehicleDetails?.data?.vinNo || null,
           tenantId: driverDoc?.tenantId || tenantId,
         };
-        Logger.log('driver unit obj ready');
 
         const resp = await this.appService.updateDriverUnit(unitData);
-        Logger.log('driver unit done');
 
         let model: DriverDocument = await getDocuments(
           driverDoc,
