@@ -596,9 +596,9 @@ export class AppController extends BaseController {
       }
 
       if (
-        editRequestData.vehicleId 
-        &&
-        driver.vehicleId != editRequestData.vehicleId // this code is to not update the vehicle every time driver gets update
+        editRequestData.vehicleId
+        // &&
+        // driver.vehicleId != editRequestData.vehicleId // this code is to not update the vehicle every time driver gets update
       ) {
         option.$or.push({ vehicleId: editRequestData.vehicleId });
         vehicleDetails = await this.appService.populateVehicle(
@@ -638,7 +638,8 @@ export class AppController extends BaseController {
           driverRequest.vehicles.splice(index, 1);
         }
       });
-      driverRequest.currentVehicle = vehicleDetails?.data?.vehicleId || driverRequest.currentVehicle;
+      driverRequest.currentVehicle =
+        vehicleDetails?.data?.vehicleId || driverRequest.currentVehicle;
       if (driver) {
         driverRequest['assignedVehicles'] = JSON.parse(
           JSON.stringify(driver['_doc'].assignedVehicles),
@@ -678,7 +679,10 @@ export class AppController extends BaseController {
       } else {
         driverRequest['enableElog'] = 'true';
       }
+      Logger.log('driver about to');
+
       const driverDoc = await this.appService.updateDriver(id, driverRequest);
+      Logger.log('driver updated');
       if (isCodriverUpdated) {
         const oldCoDriver = await (
           await this.appService.findOne({ assignTo: driverDoc.id })
