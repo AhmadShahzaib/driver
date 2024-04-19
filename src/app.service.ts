@@ -306,9 +306,9 @@ export class AppService extends BaseService<DriverDocument> {
       };
       // this.hosClient.connect();
       try {
-        const res =  firstValueFrom<MessagePatternResponseType>(
-          this.hosClient.send({ cmd: 'add_update_recordTable' }, recordMade),
-        );
+        // const res =  firstValueFrom<MessagePatternResponseType>(
+        //   this.hosClient.send({ cmd: 'add_update_recordTable' }, recordMade),
+        // );
       } catch (error) {
         this.logger.error({ error });
       }
