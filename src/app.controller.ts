@@ -13,6 +13,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   HttpException,
+  BadRequestException,
 } from '@nestjs/common';
 import { FilterQuery, Types } from 'mongoose';
 import {
@@ -288,7 +289,7 @@ export class AppController extends BaseController {
     try {
       // QQuery object
       const option: FilterQuery<DriverDocument> = {
-        $and: [{ isDeleted: false }],
+        $and: [],
         $or: [
           { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
           { phoneNumber: driverModel.phoneNumber },
@@ -301,7 +302,11 @@ export class AppController extends BaseController {
         ],
       };
       const driver = await this.appService.findOne(option);
-
+if(driver){
+  throw new BadRequestException(
+  `Driver Already exist`,
+);
+}
       let vehicleDetails;
       if (driverModel.vehicleId === '') {
         delete driverModel.vehicleId;
