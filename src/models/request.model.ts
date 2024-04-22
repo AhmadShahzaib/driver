@@ -79,7 +79,7 @@ export class DriverModel {
   @IsNotEmpty()
   state: string;
 
-  // @ApiProperty()
+  @ApiProperty()
   // @IsNotEmpty()
   // @IsString()
   // @MaxLength(15)
