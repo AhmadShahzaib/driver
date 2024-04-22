@@ -79,11 +79,11 @@ export class DriverModel {
   @IsNotEmpty()
   state: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(15)
-  @NotContains(' ')
+  // @ApiProperty()
+  // @IsNotEmpty()
+  // @IsString()
+  // @MaxLength(15)
+  // @NotContains(' ')
   phoneNumber: string;
 
   @ApiProperty({
