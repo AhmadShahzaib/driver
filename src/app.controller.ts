@@ -694,7 +694,7 @@ export class AppController extends BaseController {
           driverDoc.homeTerminalAddress.toString(),
         );
         let eldDetails;
-      
+
         if (vehicleDetails?.data?.eldId) {
           eldDetails = await this.appService.populateEld(
             vehicleDetails?.data?.eldId,
