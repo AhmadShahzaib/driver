@@ -44,7 +44,7 @@ export const addAndUpdate = async (
       Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
       throw new ConflictException(`Phone number already exists`);
     }
-    if (
+    if (driver?.licenseNumber &&
       driver?.licenseNumber.toLowerCase() ==
       driverModel.licenseNumber.toLowerCase()
     ) {
