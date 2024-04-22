@@ -75,10 +75,10 @@ export class EditDriverModel {
   state: string;
 
   @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(15)
-  @NotContains(' ')
+  // @IsNotEmpty()
+  // @IsString()
+  // @MaxLength(15)
+  // @NotContains(' ')
   phoneNumber: string;
 
   @ApiProperty()
