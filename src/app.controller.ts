@@ -289,8 +289,7 @@ export class AppController extends BaseController {
     try {
       // QQuery object
       const option: FilterQuery<DriverDocument> = {
-      
-        $or: [
+        $and: [
           { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
           { phoneNumber: driverModel.phoneNumber },
           {
@@ -302,11 +301,9 @@ export class AppController extends BaseController {
         ],
       };
       const driver = await this.appService.findOne(option);
-if(driver){
-  throw new BadRequestException(
-  `Driver Already exist`,
-);
-}
+      if (driver) {
+        throw new BadRequestException(`Driver Already exist`);
+      }
       let vehicleDetails;
       if (driverModel.vehicleId === '') {
         delete driverModel.vehicleId;
