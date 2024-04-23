@@ -299,7 +299,7 @@ export class AppController extends BaseController {
           },
           { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
         ],
-        $or:[{}]
+        $or: [{}],
       };
       const driver = await this.appService.findOne(option);
       if (driver) {
@@ -310,7 +310,7 @@ export class AppController extends BaseController {
         delete driverModel.vehicleId;
       }
       if (driverModel.vehicleId) {
-        option.$or.pop()
+        option.$or.pop();
         option.$or.push({ vehicleId: driverModel.vehicleId });
         vehicleDetails = await this.appService.populateVehicle(
           driverModel.vehicleId,

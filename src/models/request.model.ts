@@ -80,9 +80,9 @@ export class DriverModel {
   state: string;
 
   @ApiProperty()
-  // @IsNotEmpty()
-  // @IsString()
-  // @MaxLength(15)
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(15)
   // @NotContains(' ')
   phoneNumber: string;
 
