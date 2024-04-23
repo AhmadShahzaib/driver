@@ -50,6 +50,8 @@ import {
   addOrUpdate,
   addOrUpdateCoDriver,
 } from './shared/addAndUpdate.validator';
+import { addValidations } from './shared/add.validator';
+
 import { MessagePattern } from '@nestjs/microservices';
 import { DriverLoginResponse } from './models/driverLoginResponse.model';
 import { ResetPasswordRequest } from './models/resetPasswordRequest.model';
@@ -289,7 +291,7 @@ export class AppController extends BaseController {
     try {
       // QQuery object
       const option: FilterQuery<DriverDocument> = {
-        $and: [
+        $or: [
           { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
           { phoneNumber: driverModel.phoneNumber },
           {
@@ -298,10 +300,12 @@ export class AppController extends BaseController {
             },
           },
           { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
-        ],
-        $or: [{}],
+        ]
+        
       };
+      Logger.log(`Calling request data validator from addUsers`);
       const driver = await this.appService.findOne(option);
+      await addValidations( driver, driverModel);
       if (driver) {
         throw new BadRequestException(`Driver Already exist`);
       }
@@ -310,7 +314,7 @@ export class AppController extends BaseController {
         delete driverModel.vehicleId;
       }
       if (driverModel.vehicleId) {
-        option.$or.pop();
+       
         option.$or.push({ vehicleId: driverModel.vehicleId });
         vehicleDetails = await this.appService.populateVehicle(
           driverModel.vehicleId,
