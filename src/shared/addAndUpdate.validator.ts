@@ -21,16 +21,7 @@ export const addAndUpdate = async (
   id: string = null,
 ): Promise<DriverValidatorResponse> => {
   try {
-    if (
-      driverModel.isCoDriver == 'true' &&
-      (driverModel.vehicleId || driverModel.coDriverId)
-    ) {
-      // delete driverModel.vehicleId;
-      // delete driverModel.coDriverId;
-      throw new BadRequestException(
-        `coDriver Functionality is under development. `,
-      );
-    }
+   
     const driver = await appService.findOne(option);
     if (driver?.email.toLowerCase() == driverModel.email.toLowerCase()) {
       Logger.log(`Email already exists`);
@@ -44,43 +35,51 @@ export const addAndUpdate = async (
       Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
       throw new ConflictException(`Phone number already exists`);
     }
+    let requestedCoDriver: DriverDocument | null = null;
+    let isCodriverUpdated: boolean = false;
 
     // if (driver?.vehicleId.toString() == driverModel.vehicleId) {
     //   Logger.log(`${driverModel.vehicleId} already exist`);
     //   throw new ConflictException(`${driverModel.vehicleId} already exists`);
     // }
     // Checking for coDriver and his availability.
-    let requestedCoDriver: DriverDocument | null = null;
-    let isCoDriverUpdating: boolean = true;
-    let isCodriverUpdated: boolean = false;
-    if (driverModel) {
-      const toUpdateDriver = await appService.findDriverById(id);
-      isCoDriverUpdating =
-        driverModel.coDriverId !== toUpdateDriver.get('coDriverId', String);
+    if (
+      driverModel.isCoDriver == 'true' &&
+      (driverModel.coDriverId)
+    ) {
+      // delete driverModel.vehicleId;
+      // delete driverModel.coDriverId;
+      throw new BadRequestException(
+        `coDriver Functionality is under development. `,
+      );
+      let isCoDriverUpdating: boolean = true;
+   
+      
+        requestedCoDriver = await appService.findOne({
+          _id: driverModel.coDriverId,
+        });
+        if (
+          requestedCoDriver?.assignTo === null &&
+          requestedCoDriver?.coDriverId === null
+        ) {
+          driverModel.coDriverId = requestedCoDriver.id;
+          isCodriverUpdated = true;
+          requestedCoDriver.assignTo ==
+            driverModel.firstName + ' ' + driverModel.lastName;
+          requestedCoDriver?.coDriverId == driverModel.driverId;
+          let codriverData = JSON.stringify(requestedCoDriver);
+          // code for codriver
+          //  await appService.updateDriver(driverModel.coDriverId, requestedCoDriver);
+        } else if (!requestedCoDriver) {
+          throw new NotFoundException('The requested Co-Driver does not exist.');
+        } else {
+          throw new ConflictException(
+            'The requested Co-Driver is already assigned to another driver or has a Co-Driver assigned to him',
+          );
+        }
+      
     }
-    if (driverModel.isCoDriver  && isCoDriverUpdating) {
-      requestedCoDriver = await appService.findOne({
-        _id: driverModel.coDriverId,
-      });
-      if (
-        requestedCoDriver?.assignTo === null &&
-        requestedCoDriver?.coDriverId === null
-      ) {
-        driverModel.coDriverId = requestedCoDriver.id;
-        isCodriverUpdated = true;
-        requestedCoDriver.assignTo == driverModel.firstName +" "+ driverModel.lastName;
-        requestedCoDriver?.coDriverId == driverModel.driverId;
-        let codriverData = JSON.stringify(requestedCoDriver);
-// code for codriver
-        //  await appService.updateDriver(driverModel.coDriverId, requestedCoDriver);
-      } else if (!requestedCoDriver) {
-        throw new NotFoundException('The requested Co-Driver does not exist.');
-      } else {
-        throw new ConflictException(
-          'The requested Co-Driver is already assigned to another driver or has a Co-Driver assigned to him',
-        );
-      }
-    }
+  
 
     if (driverModel.vehicleId) {
       // const vehicle = await appService.findOne({ vehicleId: driverModel.vehicleId });
