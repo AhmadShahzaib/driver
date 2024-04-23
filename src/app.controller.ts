@@ -817,7 +817,7 @@ export class AppController extends BaseController {
           `Driver status changed with id :${id} and response ${result}`,
         );
         return response.status(HttpStatus.OK).send({
-          message: `Driver is ${isActive ? "activated": "inactivated"} successfully`,
+          message: `Driver is ${isActive ? "activated": "deactivated"} successfully`,
           data: result,
         });
       } else {
