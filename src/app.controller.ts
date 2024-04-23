@@ -289,7 +289,7 @@ export class AppController extends BaseController {
     try {
       // QQuery object
       const option: FilterQuery<DriverDocument> = {
-        $and: [],
+      
         $or: [
           { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
           { phoneNumber: driverModel.phoneNumber },
