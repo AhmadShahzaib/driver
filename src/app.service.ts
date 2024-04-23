@@ -275,7 +275,7 @@ export class AppService extends BaseService<DriverDocument> {
       if (!driver.enableElog) {
         driver['enableElog'] = 'true';
       }
-      if (driver.isCoDriver.toString() == 'false') {
+      if (driver?.isCoDriver?.toString() == 'false') {
         driver.coDriverId = null;
       }
       if (driver.password) {
@@ -287,23 +287,23 @@ export class AppService extends BaseService<DriverDocument> {
           new: true,
         })
         .and([{ isDeleted: false }]);
-      const driverId = result['_doc']['_id'];
-      let recordMade = {
-        driverId: driverId,
-        date: '',
-        driverName:
-          result['_doc']['firstName'] + ' ' + result['_doc']['lastName'],
-        vehicleName: driver.vehicleId ? result['_doc']['currentVehicle'] : null,
-        shippingId: '',
-        signature: '',
-        hoursWorked: 0,
-        distance: '0',
-        violations: [],
-        status: {},
-        lastKnownActivity: {},
-        homeTerminalTimeZone: result['_doc']['homeTerminalTimeZone'],
-        tenantId: '',
-      };
+      // const driverId = result['_doc']['_id'];
+      // let recordMade = {
+      //   driverId: driverId,
+      //   date: '',
+      //   driverName:
+      //     result['_doc']['firstName'] + ' ' + result['_doc']['lastName'],
+      //   vehicleName: driver.vehicleId ? result['_doc']['currentVehicle'] : null,
+      //   shippingId: '',
+      //   signature: '',
+      //   hoursWorked: 0,
+      //   distance: '0',
+      //   violations: [],
+      //   status: {},
+      //   lastKnownActivity: {},
+      //   homeTerminalTimeZone: result['_doc']['homeTerminalTimeZone'],
+      //   tenantId: '',
+      // };
       // this.hosClient.connect();
       // try {
       //   // const res =  firstValueFrom<MessagePatternResponseType>(

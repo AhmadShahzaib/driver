@@ -46,7 +46,7 @@ import GetByIdDecorators from './decorators/getDriverById';
 import IsActiveDecorators from './decorators/isActive';
 import UpdateByIdDecorators from './decorators/updateById';
 import {
-  addAndUpdate,
+  addAndUpdateCodriver,
   addOrUpdate,
   addOrUpdateCoDriver,
 } from './shared/addAndUpdate.validator';
@@ -134,136 +134,137 @@ export class AppController extends BaseController {
     }
   }
 
-  // @AddDecorators()
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'driverDocument', maxCount: 10 },
-      { name: 'profile', maxCount: 1 },
-    ]),
-  )
-  async addDriver(
-    @Body() driverModel: DriverModel,
-    @UploadedFiles()
-    files: {
-      driverDocument: Express.Multer.File[];
-      profile: Express.Multer.File;
-    },
-    @Res() response: Response,
-    @Req() request: Request,
-  ) {
-    console.log(files);
-    const { email, vehicleId } = driverModel;
-    const { tenantId } = (request.user as any) ?? { tenantId: undefined };
-    driverModel.tenantId = tenantId;
-    try {
-      const option: FilterQuery<DriverDocument> = {
-        $and: [{ isDeleted: false }],
-        $or: [
-          { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
-          { phoneNumber: driverModel.phoneNumber },
-          {
-            licenseNumber: {
-              $regex: new RegExp(`^${driverModel.licenseNumber}`, 'i'),
-            },
-          },
-          { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
-        ],
-      };
-      let vehicleDetails;
-      if (driverModel.vehicleId) {
-        option.$or.push({ vehicleId: driverModel.vehicleId });
-        vehicleDetails = await this.appService.populateVehicle(
-          driverModel.vehicleId,
-        );
-      }
-      Logger.log(`validation when add Driver through addAndUpdate method`);
-      const { requestedCoDriver } = await addAndUpdate(
-        this.appService,
-        driverModel,
-        option,
-      );
-      let driverRequest = await uploadDocument(
-        files?.driverDocument,
-        files?.profile,
-        this.appService,
-        driverModel,
-        tenantId,
-      );
-      if (!driverRequest) {
-      }
-      driverRequest.vehicles = [
-        {
-          id: vehicleDetails?.data?.id,
-          vehicleId: vehicleDetails?.data?.vehicleId,
-        },
-      ];
-      driverRequest.currentVehicle = vehicleDetails?.data?.vehicleId;
+  // // @AddDecorators()
+  // @UseInterceptors(
+  //   FileFieldsInterceptor([
+  //     { name: 'driverDocument', maxCount: 10 },
+  //     { name: 'profile', maxCount: 1 },
+  //   ]),
+  // )
+  // async addDriver(
+  //   @Body() driverModel: DriverModel,
+  //   @UploadedFiles()
+  //   files: {
+  //     driverDocument: Express.Multer.File[];
+  //     profile: Express.Multer.File;
+  //   },
+  //   @Res() response: Response,
+  //   @Req() request: Request,
+  // ) {
+  //   console.log(files);
+  //   const { email, vehicleId } = driverModel;
+  //   const { tenantId } = (request.user as any) ?? { tenantId: undefined };
+  //   driverModel.tenantId = tenantId;
+  //   try {
+  //     const option: FilterQuery<DriverDocument> = {
+  //       $and: [{ isDeleted: false }],
+  //       $or: [
+  //         { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
+  //         { phoneNumber: driverModel.phoneNumber },
+  //         {
+  //           licenseNumber: {
+  //             $regex: new RegExp(`^${driverModel.licenseNumber}`, 'i'),
+  //           },
+  //         },
+  //         { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
+  //       ],
+  //     };
+  //     let vehicleDetails;
+  //     if (driverModel.vehicleId) {
+  //       option.$or.push({ vehicleId: driverModel.vehicleId });
+  //       vehicleDetails = await this.appService.populateVehicle(
+  //         driverModel.vehicleId,
+  //       );
+  //     }
+  //     Logger.log(`validation when add Driver through addAndUpdate method`);
+  //     const { requestedCoDriver } = await addAndUpdate(
+  //       this.appService,
+  //       driverModel,
+  //       option,tenantId,
+  //       vehicleDetails.data
+  //     );
+  //     let driverRequest = await uploadDocument(
+  //       files?.driverDocument,
+  //       files?.profile,
+  //       this.appService,
+  //       driverModel,
+  //       tenantId,
+  //     );
+  //     if (!driverRequest) {
+  //     }
+  //     driverRequest.vehicles = [
+  //       {
+  //         id: vehicleDetails?.data?.id,
+  //         vehicleId: vehicleDetails?.data?.vehicleId,
+  //       },
+  //     ];
+  //     driverRequest.currentVehicle = vehicleDetails?.data?.vehicleId;
 
-      if (!driverRequest.enableElog) {
-        driverRequest['enableElog'] = request.body.enableElog;
-      } else {
-        driverRequest['enableElog'] = 'true';
-      }
+  //     if (!driverRequest.enableElog) {
+  //       driverRequest['enableElog'] = request.body.enableElog;
+  //     } else {
+  //       driverRequest['enableElog'] = 'true';
+  //     }
 
-      const driverDoc = await this.appService.register(driverRequest);
-      console.log('outside if\n\n');
-      if (driverDoc && Object.keys(driverDoc).length > 0) {
-        const office = await this.appService.populateOffices(
-          driverDoc.homeTerminalAddress.toString(),
-        );
-        const resp = await this.appService.updateVehicleAssigned(
-          vehicleId,
-          driverDoc?.id,
-          driverDoc?.coDriverId,
-          driverDoc?.firstName,
-          driverDoc?.lastName,
-          driverDoc?.driverId,
-          driverDoc?.licenseNumber,
-          driverDoc?.trailerNumber,
-          driverDoc?.userName,
-          driverDoc?.state,
-          office.data?.address,
-          office.data?.headOffice,
-          driverDoc.homeTerminalTimeZone,
-          office.data.headOfficeId,
-          office.data.id,
-          driverDoc.cycleRule,
-        );
+  //     const driverDoc = await this.appService.register(driverRequest);
+  //     console.log('outside if\n\n');
+  //     if (driverDoc && Object.keys(driverDoc).length > 0) {
+  //       const office = await this.appService.populateOffices(
+  //         driverDoc.homeTerminalAddress.toString(),
+  //       );
+  //       const resp = await this.appService.updateVehicleAssigned(
+  //         vehicleId,
+  //         driverDoc?.id,
+  //         driverDoc?.coDriverId,
+  //         driverDoc?.firstName,
+  //         driverDoc?.lastName,
+  //         driverDoc?.driverId,
+  //         driverDoc?.licenseNumber,
+  //         driverDoc?.trailerNumber,
+  //         driverDoc?.userName,
+  //         driverDoc?.state,
+  //         office.data?.address,
+  //         office.data?.headOffice,
+  //         driverDoc.homeTerminalTimeZone,
+  //         office.data.headOfficeId,
+  //         office.data.id,
+  //         driverDoc.cycleRule,
+  //       );
 
-        let model: DriverDocument = await getDocuments(
-          driverDoc,
-          this.appService,
-        );
-        const result: DriverResponse = new DriverResponse(model);
-        if (requestedCoDriver && Object.keys(requestedCoDriver).length > 0) {
-          Logger.log(
-            `Want update CoDriver assignTo with driver id:${driverDoc.id}`,
-          );
-          const updateDriver = await requestedCoDriver.updateOne({
-            assignTo: driverDoc.id,
-            vehicleId: driverDoc.vehicleId,
-          });
-        }
-        // add data of driver.
-        //await addNewDriverLogs()
-        Logger.log(`Driver created successfully`);
-        return response.status(HttpStatus.CREATED).send({
-          message: 'Driver has been created successfully',
-          data: result,
-        });
-      } else {
-        Logger.log(`Not Driver create`);
-        throw new InternalServerErrorException(
-          `unknown error while creating Driver`,
-        );
-      }
+  //       let model: DriverDocument = await getDocuments(
+  //         driverDoc,
+  //         this.appService,
+  //       );
+  //       const result: DriverResponse = new DriverResponse(model);
+  //       if (requestedCoDriver && Object.keys(requestedCoDriver).length > 0) {
+  //         Logger.log(
+  //           `Want update CoDriver assignTo with driver id:${driverDoc.id}`,
+  //         );
+  //         const updateDriver = await requestedCoDriver.updateOne({
+  //           assignTo: driverDoc.id,
+  //           vehicleId: driverDoc.vehicleId,
+  //         });
+  //       }
+  //       // add data of driver.
+  //       //await addNewDriverLogs()
+  //       Logger.log(`Driver created successfully`);
+  //       return response.status(HttpStatus.CREATED).send({
+  //         message: 'Driver has been created successfully',
+  //         data: result,
+  //       });
+  //     } else {
+  //       Logger.log(`Not Driver create`);
+  //       throw new InternalServerErrorException(
+  //         `unknown error while creating Driver`,
+  //       );
+  //     }
 
-      // }
-    } catch (error) {
-      Logger.error({ message: error.message, stack: error.stack });
-      throw error;
-    }
-  }
+  //     // }
+  //   } catch (error) {
+  //     Logger.error({ message: error.message, stack: error.stack });
+  //     throw error;
+  //   }
+  // }
 
   /**
    * Dynamic driver creation
@@ -618,11 +619,13 @@ export class AppController extends BaseController {
           );
         }
       }
-      const { requestedCoDriver, isCodriverUpdated } = await addAndUpdate(
+      const { requestedCoDriver, isCodriverUpdated } = await addAndUpdateCodriver(
         this.appService,
         editRequestData,
         option,
         id,
+        vehicleDetails.data,
+        driver
       );
       let driverRequest = await uploadDocument(
         files?.driverDocument,
@@ -689,13 +692,13 @@ export class AppController extends BaseController {
       }
 
       const driverDoc = await this.appService.updateDriver(id, driverRequest);
-      if (isCodriverUpdated) {
-        const oldCoDriver = await (
-          await this.appService.findOne({ assignTo: driverDoc.id })
-        )?.updateOne({ assignTo: null });
-        await requestedCoDriver.updateOne({ assignTo: driverDoc.id });
-        // editRequestData.coDriverId = driverDoc.id;
-      }
+      // if (isCodriverUpdated) {
+      //   const oldCoDriver = await (
+      //     await this.appService.findOne({ assignTo: driverDoc.id })
+      //   )?.updateOne({ assignTo: null });
+      //   await requestedCoDriver.updateOne({ assignTo: driverDoc.id });
+      //   // editRequestData.coDriverId = driverDoc.id;
+      // }
 
       if (driverDoc && Object.keys(driverDoc).length > 0) {
         const office = await this.appService.populateOffices(
