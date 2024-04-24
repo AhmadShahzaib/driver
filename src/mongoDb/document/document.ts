@@ -19,6 +19,7 @@ export default interface DriverDocument extends Document {
   homeTerminalAddress: string;
   state: string;
   phoneNumber: string;
+  isCoDriver?:boolean;
   homeTerminalTimeZone?: StringOrTimeZone;
   password: string;
   licenseNumber: string;

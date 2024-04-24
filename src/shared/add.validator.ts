@@ -13,18 +13,15 @@ import { State } from 'country-state-city';
 import timezones from 'timezones-list';
 import { DriverValidatorResponse } from '../models';
 import { FilterQuery } from 'mongoose';
-import moment from 'moment';
 
-export const addAndUpdateCodriver = async (
-  appService: AppService,
-  driverModel: DriverModel,
-  option: FilterQuery<DriverDocument>,
-  id: string = null,
-  vehicleData,
-  currentDriver
-): Promise<DriverValidatorResponse> => {
+export const addValidations = async (
+  
+  driver: DriverDocument | EditDriverModel,
+  driverModel: DriverModel | EditDriverModel,
+ 
+) => {
   try {
-    const driver = await appService.findOne(option);
+   
     if (driver?.email.toLowerCase() == driverModel.email.toLowerCase()) {
       Logger.log(`Email already exists`);
       throw new ConflictException(`Email already exists`);
@@ -37,119 +34,12 @@ export const addAndUpdateCodriver = async (
       Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
       throw new ConflictException(`Phone number already exists`);
     }
-    let requestedCoDriver: DriverDocument | null = null;
-    let isCodriverUpdated: boolean = false;
 
-    // if (driver?.vehicleId.toString() == driverModel.vehicleId) {
-    //   Logger.log(`${driverModel.vehicleId} already exist`);
-    //   throw new ConflictException(`${driverModel.vehicleId} already exists`);
-    // }
-    // Checking for coDriver and his availability.
-    let codriver = currentDriver.get('coDriverId', String);
-    if (driverModel.isCoDriver == 'true' && driverModel.coDriverId && codriver != driverModel?.coDriverId) {
-      throw new BadRequestException(
-        `coDriver Functionality is under development. `,
-      );
-      // delete driverModel.vehicleId;
-      // delete driverModel.coDriverId;
 
-      let isCoDriverUpdating: boolean = true;
+ 
 
-      requestedCoDriver = await appService.findOne({
-        _id: driverModel.coDriverId,
-      });
-      if (
-        requestedCoDriver?.assignTo === null &&
-        requestedCoDriver?.coDriverId === null
-      ) {
-        driverModel.coDriverId = requestedCoDriver.id;
-        isCodriverUpdated = true;
-        requestedCoDriver.assignTo ==
-          driverModel.firstName + ' ' + driverModel.lastName;
-        requestedCoDriver?.coDriverId == driverModel.driverId;
-        let codriverData: any = JSON.stringify(requestedCoDriver);
-        codriverData = JSON.parse(codriverData);
-        //vehicle assigning
-        if (vehicleData) {
-          if (driverModel.vehicleId) {
-            let flag = false;
-            if (codriverData?.assignedVehicles?.length > 0)
-              for (let i = 0; i < codriverData.assignedVehicles.length; i++) {
-                if (
-                  codriverData.assignedVehicles[i].id === driverModel.vehicleId
-                ) {
-                  flag = true;
-                }
-              }
-
-            if (!flag) {
-              codriverData.assignedVehicles.push({
-                id: vehicleData?.id,
-                vehicleId: vehicleData?.vehicleId,
-                vinNo: vehicleData?.vinNo,
-                date: (() => {
-                  const date = moment().format('YYYY-MM-DD');
-                  return date;
-                })(),
-              });
-            }
-          }
-          codriverData.currentVehicle = vehicleData?.vehicleId;
-          codriverData.vehicleId = driverModel.vehicleId;
-          delete codriverData.password;
-        }
-        // code for codriver
-        await appService.updateDriver(driverModel.coDriverId, codriverData);
-      } else if (!requestedCoDriver) {
-        throw new NotFoundException('The requested Co-Driver does not exist.');
-      } else {
-        throw new ConflictException(
-          'The requested Co-Driver is already assigned to another driver or has a Co-Driver assigned to him',
-        );
-      }
-    }
-
-    if (driverModel.vehicleId) {
-      // const vehicle = await appService.findOne({ vehicleId: driverModel.vehicleId });
-      // if (vehicle) {
-      //   throw new ConflictException('vehicle already assigned');
-      // }
-      const getVehicle = await appService.populateVehicle(
-        driverModel.vehicleId,
-      );
-      if (getVehicle) {
-        const isVehicleAssigned = await appService.isVehicleAssigned(
-          driverModel.vehicleId,
-          id,
-        );
-        // if (isVehicleAssigned) {
-        //   throw new ConflictException('vehicle already assigned');
-        // }
-      }
-      // Finding timezone object
-    }
-    const getOffice = await appService.populateOffices(
-      driverModel.homeTerminalAddress,
-    );
-    if (getOffice) {
-      const index = timezones.findIndex((ele) => {
-        return ele.tzCode === (driverModel.homeTerminalTimeZone as string);
-      });
-      if (index >= 0) {
-        driverModel.homeTerminalTimeZone = timezones[index];
-      } else {
-        throw new NotFoundException(`TimeZone you select does not exist`);
-      }
-
-      // Finding State Name
-      const state = State.getStateByCodeAndCountry(driverModel.state, 'US');
-      if (state) {
-        driverModel.state = state.name;
-        return { requestedCoDriver, isCodriverUpdated };
-      } else {
-        throw new NotFoundException(`state you select does not exist`);
-      }
-    }
+    
+   
   } catch (err) {
     throw err;
   }
