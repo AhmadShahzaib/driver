@@ -624,7 +624,7 @@ export class AppController extends BaseController {
         editRequestData,
         option,
         id,
-        vehicleDetails.data,
+        vehicleDetails?.data,
         driver
       );
       let driverRequest = await uploadDocument(
