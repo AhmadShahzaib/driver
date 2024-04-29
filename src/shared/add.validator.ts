@@ -30,10 +30,10 @@ export const addValidations = async (
       Logger.log(`Username already exist`);
       throw new ConflictException(`DriverId already exists`);
     }
-    if (driver?.phoneNumber && driver?.phoneNumber == driverModel.phoneNumber) {
-      Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
-      throw new ConflictException(`Phone number already exists`);
-    }
+    // if (driver?.phoneNumber && driver?.phoneNumber == driverModel.phoneNumber) {
+    //   Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
+    //   throw new ConflictException(`Phone number already exists`);
+    // }
 
 
  
