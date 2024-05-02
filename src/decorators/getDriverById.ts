@@ -12,7 +12,7 @@ import { DriverResponse } from '../models/response.model';
 export default function GetByIdDecorators() {
   const GetByIdDecorators: Array<CombineDecoratorType> = [
     Get(':id'),
-    SetMetadata('permissions', [DRIVER.GETBYID]),
+    SetMetadata('permissions', [DRIVER.LIST]),
     ApiBearerAuth('access-token'),
     ApiResponse({ status: HttpStatus.OK, type: DriverResponse }),
     ApiParam({
