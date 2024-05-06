@@ -21,7 +21,7 @@ export const addValidations = async (
   try {
     if (driver?.email.toLowerCase() == driverModel.email.toLowerCase()) {
       Logger.log(`Driver email already exists`);
-      throw new BadRequestException(`Driver email already exists`);
+      throw new ConflictException(`Driver email already exists`);
     }
     if (driver?.userName.toLowerCase() == driverModel.userName.toLowerCase()) {
       Logger.log(`Username already exist`);
