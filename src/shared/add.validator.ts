@@ -25,14 +25,14 @@ export const addValidations = async (
     }
     if (driver?.userName.toLowerCase() == driverModel.userName.toLowerCase()) {
       Logger.log(`Username already exist`);
-      throw new BadRequestException(`Driver ID already exists`);
+      throw new ConflictException(`Driver ID already exists`);
     }
     if (
       driver?.licenseNumber.toLowerCase() ==
       driverModel.licenseNumber.toLowerCase()
     ) {
       Logger.log(`Driver license number already exists`);
-      throw new BadRequestException(`Driver license number already exists`);
+      throw new ConflictException(`Driver license number already exists`);
     }
     // if (driver?.phoneNumber && driver?.phoneNumber == driverModel.phoneNumber) {
     //   Logger.log(`${driverModel.phoneNumber} Phone number already exists`);

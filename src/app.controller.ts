@@ -13,7 +13,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   HttpException,
-  BadRequestException,
+  BadRequestException,ConflictException
 } from '@nestjs/common';
 import { FilterQuery, Types } from 'mongoose';
 import {
@@ -304,11 +304,12 @@ export class AppController extends BaseController {
         ]
         
       };
+      option['$and'].push({ tenantId: tenantId });
       Logger.log(`Calling request data validator from addUsers`);
       const driver = await this.appService.findOne(option);
       await addValidations( driver, driverModel);
       if (driver) {
-        throw new BadRequestException(`Driver Already exist`);
+        throw new ConflictException(`Driver Already exist`);
       }
       let vehicleDetails;
       if (driverModel.vehicleId === '') {
@@ -598,6 +599,7 @@ export class AppController extends BaseController {
         ],
         $and: [{ _id: { $ne: id } }],
       };
+      
       const driver = await this.appService.findOne({ _id: { $eq: id } });
       let vehicleDetails;
       if (editRequestData.vehicleId === '') {
