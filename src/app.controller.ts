@@ -401,7 +401,8 @@ export class AppController extends BaseController {
       const office = await this.appService.populateOffices(
         driverRequest.homeTerminalAddress.toString(),
       );
-      driverRequest.homeTerminalAddress = office.data.address;
+      driverRequest.homeTerminalAddress = office?.data?.address;
+      driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
       const driverDoc = await this.appService.register(driverRequest);
       // FOr the main driver
       if (vehicleDetails?.data) {
@@ -696,7 +697,11 @@ export class AppController extends BaseController {
       } else {
         driverRequest['enableElog'] = 'true';
       }
-
+      const office = await this.appService.populateOffices(
+        driverRequest.homeTerminalAddress.toString(),
+      );
+      driverRequest.homeTerminalAddress = office?.data?.address;
+      driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
       const driverDoc = await this.appService.updateDriver(id, driverRequest);
       // if (isCodriverUpdated) {
       //   const oldCoDriver = await (
@@ -707,9 +712,7 @@ export class AppController extends BaseController {
       // }
 
       if (driverDoc && Object.keys(driverDoc).length > 0) {
-        const office = await this.appService.populateOffices(
-          driverDoc.homeTerminalAddress.toString(),
-        );
+       
         let eldDetails;
 
         if (vehicleDetails?.data?.eldId) {
