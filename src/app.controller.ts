@@ -13,7 +13,8 @@ import {
   UseInterceptors,
   UploadedFiles,
   HttpException,
-  BadRequestException,ConflictException
+  BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { FilterQuery, Types } from 'mongoose';
 import {
@@ -292,7 +293,7 @@ export class AppController extends BaseController {
     try {
       // QQuery object
       const option: FilterQuery<DriverDocument> = {
-        $and:[],
+        $and: [],
         $or: [
           { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
           { phoneNumber: driverModel.phoneNumber },
@@ -302,13 +303,12 @@ export class AppController extends BaseController {
             },
           },
           { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
-        ]
-        
+        ],
       };
       option['$and'].push({ tenantId: tenantId });
       Logger.log(`Calling request data validator from addUsers`);
       const driver = await this.appService.findOne(option);
-      await addValidations( driver, driverModel);
+      await addValidations(driver, driverModel);
       if (driver) {
         throw new ConflictException(`Driver Already exist`);
       }
@@ -317,7 +317,6 @@ export class AppController extends BaseController {
         delete driverModel.vehicleId;
       }
       if (driverModel.vehicleId) {
-       
         option.$or.push({ vehicleId: driverModel.vehicleId });
         vehicleDetails = await this.appService.populateVehicle(
           driverModel.vehicleId,
@@ -399,7 +398,10 @@ export class AppController extends BaseController {
       } else {
         driverRequest['enableElog'] = 'true';
       }
-
+      const office = await this.appService.populateOffices(
+        driverRequest.homeTerminalAddress.toString(),
+      );
+      driverRequest.homeTerminalAddress = office.data.address;
       const driverDoc = await this.appService.register(driverRequest);
       // FOr the main driver
       if (vehicleDetails?.data) {
@@ -461,9 +463,9 @@ export class AppController extends BaseController {
 
       console.log('outside if\n\n');
       if (driverDoc && Object.keys(driverDoc).length > 0) {
-        const office = await this.appService.populateOffices(
-          driverDoc.homeTerminalAddress.toString(),
-        );
+        // const office = await this.appService.populateOffices(
+        //   driverDoc.homeTerminalAddress.toString(),
+        // );
         console.log('inside if\n\n');
         let eldDetails;
         if (vehicleDetails?.data?.eldId) {
@@ -600,7 +602,7 @@ export class AppController extends BaseController {
         ],
         $and: [{ _id: { $ne: id } }],
       };
-      
+
       const driver = await this.appService.findOne({ _id: { $eq: id } });
       let vehicleDetails;
       if (editRequestData.vehicleId === '') {
@@ -622,14 +624,15 @@ export class AppController extends BaseController {
           );
         }
       }
-      const { requestedCoDriver, isCodriverUpdated } = await addAndUpdateCodriver(
-        this.appService,
-        editRequestData,
-        option,
-        id,
-        vehicleDetails?.data,
-        driver
-      );
+      const { requestedCoDriver, isCodriverUpdated } =
+        await addAndUpdateCodriver(
+          this.appService,
+          editRequestData,
+          option,
+          id,
+          vehicleDetails?.data,
+          driver,
+        );
       let driverRequest = await uploadDocument(
         files?.driverDocument,
         files?.profile,
@@ -823,7 +826,9 @@ export class AppController extends BaseController {
           `Driver status changed with id :${id} and response ${result}`,
         );
         return response.status(HttpStatus.OK).send({
-          message: `Driver is ${isActive ? "activated": "deactivated"} successfully`,
+          message: `Driver is ${
+            isActive ? 'activated' : 'deactivated'
+          } successfully`,
           data: result,
         });
       } else {

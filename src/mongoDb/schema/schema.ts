@@ -32,7 +32,7 @@ export const DriverSchema = new mongoose.Schema(
     deviceType: { type: String },
     homeTerminalTimeZone: { type: TimeZoneSchema, required: true },
     homeTerminalAddress: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       required: true,
     },
     state: { type: String, required: true },
