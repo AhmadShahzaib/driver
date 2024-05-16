@@ -712,7 +712,6 @@ export class AppController extends BaseController {
       // }
 
       if (driverDoc && Object.keys(driverDoc).length > 0) {
-       
         let eldDetails;
 
         if (vehicleDetails?.data?.eldId) {
@@ -1130,10 +1129,11 @@ export class AppController extends BaseController {
   }
   @UseInterceptors(new MessagePatternResponseInterceptor())
   @MessagePattern({ cmd: 'update_driver_client' })
-  async tcp_updateClient(
-    id,client
-  ): Promise<DriverResponse | Error> {
+  async tcp_updateClient(data): Promise<DriverResponse | Error> {
     try {
+      const id = data.id;
+      const client = data.client;
+
       const driver = await this.appService.driverClient(id, client);
       if (driver && Object.keys(driver).length > 0) {
         Logger.log(`driver client updated`);
