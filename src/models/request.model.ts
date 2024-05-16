@@ -89,7 +89,7 @@ export class DriverModel {
   @ApiProperty({
     type: String,
   })
-  @IsNotEmpty()
+  // @IsNotEmpty()
   homeTerminalTimeZone: StringOrTimeZone;
 
   @ApiProperty()
