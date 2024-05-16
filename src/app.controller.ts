@@ -401,7 +401,7 @@ export class AppController extends BaseController {
       const office = await this.appService.populateOffices(
         driverRequest.homeTerminalAddress.toString(),
       );
-      driverRequest.homeTerminalAddress = office?.data?.address;
+      // driverRequest.homeTerminalAddress = office?.data;
       driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
       const driverDoc = await this.appService.register(driverRequest);
       // FOr the main driver
@@ -700,7 +700,7 @@ export class AppController extends BaseController {
       const office = await this.appService.populateOffices(
         driverRequest.homeTerminalAddress.toString(),
       );
-      driverRequest.homeTerminalAddress = office?.data?.address;
+      // driverRequest.homeTerminalAddress = office?.data;
       driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
       const driverDoc = await this.appService.updateDriver(id, driverRequest);
       // if (isCodriverUpdated) {
@@ -712,7 +712,6 @@ export class AppController extends BaseController {
       // }
 
       if (driverDoc && Object.keys(driverDoc).length > 0) {
-       
         let eldDetails;
 
         if (vehicleDetails?.data?.eldId) {
@@ -1130,9 +1129,7 @@ export class AppController extends BaseController {
   }
   @UseInterceptors(new MessagePatternResponseInterceptor())
   @MessagePattern({ cmd: 'update_driver_client' })
-  async tcp_updateClient(
-    id,client
-  ): Promise<DriverResponse | Error> {
+  async tcp_updateClient(id, client): Promise<DriverResponse | Error> {
     try {
       const driver = await this.appService.driverClient(id, client);
       if (driver && Object.keys(driver).length > 0) {
