@@ -1128,7 +1128,25 @@ export class AppController extends BaseController {
       return err;
     }
   }
-
+  @UseInterceptors(new MessagePatternResponseInterceptor())
+  @MessagePattern({ cmd: 'update_driver_client' })
+  async tcp_updateClient(
+    id,client
+  ): Promise<DriverResponse | Error> {
+    try {
+      const driver = await this.appService.driverClient(id, client);
+      if (driver && Object.keys(driver).length > 0) {
+        Logger.log(`driver client updated`);
+        return new DriverResponse(driver);
+      } else {
+        Logger.log(`not find  Driver`);
+        throw new NotFoundException(`driver not found`);
+      }
+    } catch (err) {
+      Logger.error({ message: err.message, stack: err.stack });
+      return err;
+    }
+  }
   @UseInterceptors(new MessagePatternResponseInterceptor())
   @MessagePattern({ cmd: 'get_driver_by_id' })
   async tcp_getDriverById(id: string): Promise<any> {

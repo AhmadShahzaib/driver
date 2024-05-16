@@ -364,6 +364,26 @@ export class AppService extends BaseService<DriverDocument> {
       throw err;
     }
   };
+
+  driverClient = async (
+    id: string,
+    client: any,
+  ): Promise<DriverDocument> => {
+    try {
+      return await this.driverModel
+        .findByIdAndUpdate(
+          id,
+          { client: client },
+          {
+            new: true,
+          },
+        )
+       
+    } catch (err) {
+      this.logger.error({ message: err.message, stack: err.stack });
+      throw err;
+    }
+  };
   findOneAndUpdate = async (
     data: ResetPasswordRequest,
   ): Promise<DriverDocument> => {

@@ -35,6 +35,7 @@ export default interface DriverDocument extends Document {
   enableElog: boolean;
   cycleRule: string;
   deviceToken?: string;
+  client:any;
   deviceType?: string;
   yardMove: boolean;
   personalConveyance: boolean;
