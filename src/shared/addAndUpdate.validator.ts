@@ -21,7 +21,7 @@ export const addAndUpdateCodriver = async (
   option: FilterQuery<DriverDocument>,
   id: string = null,
   vehicleData,
-  currentDriver
+  currentDriver,
 ): Promise<DriverValidatorResponse> => {
   try {
     const driver = await appService.findOne(option);
@@ -46,7 +46,11 @@ export const addAndUpdateCodriver = async (
     // }
     // Checking for coDriver and his availability.
     let codriver = currentDriver.get('coDriverId', String);
-    if (driverModel.isCoDriver == 'true' && driverModel.coDriverId && codriver != driverModel?.coDriverId) {
+    if (
+      driverModel.isCoDriver == 'true' &&
+      driverModel.coDriverId &&
+      codriver != driverModel?.coDriverId
+    ) {
       throw new BadRequestException(
         `coDriver Functionality is under development. `,
       );
@@ -133,7 +137,7 @@ export const addAndUpdateCodriver = async (
     );
     if (getOffice) {
       const index = timezones.findIndex((ele) => {
-        return ele.tzCode === (driverModel.homeTerminalTimeZone as string);
+        return ele.tzCode === (getOffice?.data?.timeZone?.tzCode as string);
       });
       if (index >= 0) {
         driverModel.homeTerminalTimeZone = timezones[index];
@@ -408,8 +412,8 @@ export const addOrUpdateCoDriver = async (
     );
     if (getOffice) {
       const index = timezones.findIndex((ele) => {
-        return ele.tzCode === 'America/Chicago';
-        // return ele.tzCode === (driverModel.homeTerminalTimeZone as string);
+        // return ele.tzCode === 'America/Chicago';
+        return ele.tzCode === (getOffice?.data?.timeZone?.tzCode as string);
       });
       if (index >= 0) {
         driverModel.homeTerminalTimeZone = timezones[index];

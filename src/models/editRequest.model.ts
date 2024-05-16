@@ -82,7 +82,7 @@ export class EditDriverModel {
   phoneNumber: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  // @IsNotEmpty()
   homeTerminalTimeZone: StringOrTimeZone;
 
   @IsOptional()

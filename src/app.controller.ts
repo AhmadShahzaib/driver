@@ -401,7 +401,7 @@ export class AppController extends BaseController {
       const office = await this.appService.populateOffices(
         driverRequest.homeTerminalAddress.toString(),
       );
-      driverRequest.homeTerminalAddress = office?.data?.address;
+      // driverRequest.homeTerminalAddress = office?.data;
       driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
       const driverDoc = await this.appService.register(driverRequest);
       // FOr the main driver
@@ -700,7 +700,7 @@ export class AppController extends BaseController {
       const office = await this.appService.populateOffices(
         driverRequest.homeTerminalAddress.toString(),
       );
-      driverRequest.homeTerminalAddress = office?.data?.address;
+      // driverRequest.homeTerminalAddress = office?.data;
       driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
       const driverDoc = await this.appService.updateDriver(id, driverRequest);
       // if (isCodriverUpdated) {
