@@ -322,18 +322,11 @@ export class AppController extends BaseController {
           driverModel.vehicleId,
         );
         vehicleDetails.data['assignedDrivers'] = JSON.parse(
-          JSON.stringify(vehicleDetails?.data.assignedDrivers),
+          JSON.stringify(vehicleDetails?.data?.assignedDrivers),
         );
       }
       Logger.log(`validation when add Driver through addAndUpdate method`);
-      // previous code by farzan
-      // const { requestedCoDriver } = await addOrUpdate(
-      //   this.appService,
-      //   driverModel,
-      //   option,
-      // );
-
-      const { requestedCoDriver } = await addOrUpdateCoDriver(
+      const { requestedCoDriver } = await addOrUpdate(
         this.appService,
         driverModel,
         option,
@@ -403,6 +396,11 @@ export class AppController extends BaseController {
       );
       // driverRequest.homeTerminalAddress = office?.data;
       driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
+      if (requestedCoDriver) {
+        driverRequest.assignTo =
+          requestedCoDriver.firstName + ' ' + requestedCoDriver.lastName;
+        driverRequest.coDriverId = requestedCoDriver.id;
+      }
       const driverDoc = await this.appService.register(driverRequest);
       // FOr the main driver
       if (vehicleDetails?.data) {
@@ -525,7 +523,8 @@ export class AppController extends BaseController {
             `Want update CoDriver assignTo with driver id:${driverDoc.id}`,
           );
           const updateDriver = await requestedCoDriver.updateOne({
-            assignTo: driverDoc.id,
+            assignTo: driverDoc.firstName + ' ' + driverDoc.lastName,
+            coDriverId: driverDoc.id,
             vehicleId: driverDoc.vehicleId || requestedCoDriver.vehicleId,
             currentVehicle:
               driverDoc.currentVehicle || requestedCoDriver.currentVehicle,
