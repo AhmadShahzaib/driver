@@ -267,6 +267,15 @@ export class AppService extends BaseService<DriverDocument> {
     }
   };
 
+  findDriverCo = async (options): Promise<DriverDocument> => {
+    try {
+      options.isDeleted = false;
+      return await this.driverModel.findOne(options).lean();
+    } catch (err) {
+      this.logger.error({ message: err.message, stack: err.stack });
+      throw err;
+    }
+  };
   updateDriver = async (
     id: string,
     driver: EditDriverModel,

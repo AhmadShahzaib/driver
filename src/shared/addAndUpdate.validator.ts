@@ -59,7 +59,7 @@ export const addAndUpdateCodriver = async (
 
       let isCoDriverUpdating: boolean = true;
 
-      requestedCoDriver = await appService.findOne({
+      requestedCoDriver = await appService.findDriverCo({
         _id: driverModel.coDriverId,
       });
       if (
