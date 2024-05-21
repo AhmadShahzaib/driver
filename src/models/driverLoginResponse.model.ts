@@ -25,6 +25,7 @@ export class DriverLoginResponse extends BaseResponseType {
   cycleRule: string;
   licenseNumber: string;
   trailerNumber: string;
+  client:any;
   eldUsernameDriver: string;
   driverProfile: any;
   assignedVehicles: [];
@@ -48,6 +49,8 @@ export class DriverLoginResponse extends BaseResponseType {
     this.personalConveyance = driverDocument.personalConveyance;
     this.assignTo = driverDocument.assignTo;
     this.tenantId = driverDocument.tenantId;
+  
+  this.client = driverDocument.client;
     this.deviceSerialNo = driverDocument.deviceSerialNo;
     this.cycleRule = driverDocument.cycleRule;
     this.trailerNumber = driverDocument.trailerNumber
