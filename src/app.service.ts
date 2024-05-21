@@ -270,7 +270,7 @@ export class AppService extends BaseService<DriverDocument> {
   findDriverCo = async (options): Promise<DriverDocument> => {
     try {
       options.isDeleted = false;
-      return await this.driverModel.findOne(options).lean();
+      return await this.driverModel.findOne(options);
     } catch (err) {
       this.logger.error({ message: err.message, stack: err.stack });
       throw err;
@@ -374,20 +374,15 @@ export class AppService extends BaseService<DriverDocument> {
     }
   };
 
-  driverClient = async (
-    id: string,
-    client: any,
-  ): Promise<DriverDocument> => {
+  driverClient = async (id: string, client: any): Promise<DriverDocument> => {
     try {
-      return await this.driverModel
-        .findByIdAndUpdate(
-          id,
-          { client: client },
-          {
-            new: true,
-          },
-        )
-       
+      return await this.driverModel.findByIdAndUpdate(
+        id,
+        { client: client },
+        {
+          new: true,
+        },
+      );
     } catch (err) {
       this.logger.error({ message: err.message, stack: err.stack });
       throw err;

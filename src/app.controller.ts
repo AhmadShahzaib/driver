@@ -400,6 +400,8 @@ export class AppController extends BaseController {
         driverRequest.assignTo =
           requestedCoDriver.firstName + ' ' + requestedCoDriver.lastName;
         driverRequest.coDriverId = requestedCoDriver.id;
+      } else {
+        driverRequest.assignTo = null;
       }
       const driverDoc = await this.appService.register(driverRequest);
       // For the main driver
@@ -707,10 +709,12 @@ export class AppController extends BaseController {
       //   await requestedCoDriver.updateOne({ assignTo: driverDoc.id });
       //   // editRequestData.coDriverId = driverDoc.id;
       // }
+
       // For co driver
       if (
         editRequestData.coDriverId &&
-        JSON.stringify(editRequestData.isCoDriver) == 'true'
+        editRequestData.isCoDriver == 'true' &&
+        editRequestData.vehicleId
       ) {
         let flag = false;
         if (requestedCoDriver['_doc'].assignedVehicles.length > 0)
@@ -757,6 +761,18 @@ export class AppController extends BaseController {
         if (vehicleDetails?.data?.eldId) {
           eldDetails = await this.appService.populateEld(
             vehicleDetails?.data?.eldId,
+          );
+        }
+        // For the main driver
+        if (vehicleDetails?.data) {
+          await this.appService.assignDriverInAssignedVehicles(
+            vehicleDetails?.data,
+            {
+              _id: driverDoc._id,
+              email: driverDoc.email,
+              userName: driverDoc.userName,
+              phoneNumber: driverDoc.phoneNumber,
+            },
           );
         }
 
