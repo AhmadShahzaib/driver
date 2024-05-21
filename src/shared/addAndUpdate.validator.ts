@@ -110,15 +110,18 @@ export const addAndUpdateCodriver = async (
         // code for codriver
         await appService.updateDriver(driverModel.coDriverId, codriverData);
         // now need to remove already assigned co driver to this driver
-        requestedCoDriver = await appService.findOne({
-          _id: codriver,
-        });
-        if (requestedCoDriver) {
-          let previousCoDriver: any = JSON.stringify(requestedCoDriver);
-          previousCoDriver = JSON.parse(previousCoDriver);
-          previousCoDriver.assignTo = null;
-          previousCoDriver.coDriverId = null;
-          await appService.updateDriver(codriver, previousCoDriver);
+        if (codriver) {
+          let oldRequestedCoDriver: DriverDocument | null = null;
+          oldRequestedCoDriver = await appService.findOne({
+            _id: codriver,
+          });
+          if (oldRequestedCoDriver) {
+            let previousCoDriver: any = JSON.stringify(oldRequestedCoDriver);
+            previousCoDriver = JSON.parse(previousCoDriver);
+            previousCoDriver.assignTo = null;
+            previousCoDriver.coDriverId = null;
+            await appService.updateDriver(codriver, previousCoDriver);
+          }
         }
       } else if (!requestedCoDriver) {
         throw new NotFoundException('The requested Co-Driver does not exist.');
@@ -138,27 +141,35 @@ export const addAndUpdateCodriver = async (
       codriverData.assignTo = null;
       codriverData.coDriverId = null;
       await appService.updateDriver(codriver, codriverData);
+    } else if (
+      driverModel.isCoDriver == 'true' &&
+      driverModel.coDriverId &&
+      driverModel.vehicleId != currentDriver.get('vehicleId', String)
+    ) {
+      requestedCoDriver = await appService.findOne({
+        _id: driverModel.coDriverId,
+      });
     }
 
-    if (driverModel.vehicleId) {
-      // const vehicle = await appService.findOne({ vehicleId: driverModel.vehicleId });
-      // if (vehicle) {
-      //   throw new ConflictException('vehicle already assigned');
-      // }
-      const getVehicle = await appService.populateVehicle(
-        driverModel.vehicleId,
-      );
-      if (getVehicle) {
-        const isVehicleAssigned = await appService.isVehicleAssigned(
-          driverModel.vehicleId,
-          id,
-        );
-        // if (isVehicleAssigned) {
-        //   throw new ConflictException('vehicle already assigned');
-        // }
-      }
-      // Finding timezone object
-    }
+    // if (driverModel.vehicleId) {
+    //   // const vehicle = await appService.findOne({ vehicleId: driverModel.vehicleId });
+    //   // if (vehicle) {
+    //   //   throw new ConflictException('vehicle already assigned');
+    //   // }
+    //   const getVehicle = await appService.populateVehicle(
+    //     driverModel.vehicleId,
+    //   );
+    //   if (getVehicle) {
+    //     const isVehicleAssigned = await appService.isVehicleAssigned(
+    //       driverModel.vehicleId,
+    //       id,
+    //     );
+    //     // if (isVehicleAssigned) {
+    //     //   throw new ConflictException('vehicle already assigned');
+    //     // }
+    //   }
+    //   // Finding timezone object
+    // }
     const getOffice = await appService.populateOffices(
       driverModel.homeTerminalAddress,
     );
@@ -186,10 +197,6 @@ export const addAndUpdateCodriver = async (
   }
 };
 
-/**
- * Add Or Update
- * farzan-driverbook
- */
 export const addOrUpdate = async (
   appService: AppService,
   driverModel: DriverModel | EditDriverModel,
@@ -221,7 +228,7 @@ export const addOrUpdate = async (
     );
     if (getOffice) {
       const index = timezones.findIndex((ele) => {
-        return ele.tzCode === 'America/Chicago';
+        return ele.tzCode === (getOffice?.data?.timeZone?.tzCode as string);
         // return ele.tzCode === (driverModel.homeTerminalTimeZone as string);
       });
       if (index >= 0) {
@@ -245,6 +252,10 @@ export const addOrUpdate = async (
   }
 };
 
+/**
+ * Add Or Update
+ * farzan-driverbook
+ */
 // export const addOrUpdate = async (
 //   appService: AppService,
 //   driverModel: DriverModel | EditDriverModel,
@@ -382,6 +393,7 @@ export const addOrUpdate = async (
 // };
 
 // Co-Driver functionality starts here
+
 export const addOrUpdateCoDriver = async (
   appService: AppService,
   driverModel: DriverModel | EditDriverModel,
