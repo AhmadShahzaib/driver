@@ -675,7 +675,7 @@ export class AppController extends BaseController {
         }
       });
       driverRequest.currentVehicle =
-        vehicleDetails?.data?.vehicleId || driverRequest.currentVehicle;
+        vehicleDetails?.data?.vehicleId || driverRequest.currentVehicle || null;
       if (driver) {
         driverRequest['assignedVehicles'] = JSON.parse(
           JSON.stringify(driver['_doc'].assignedVehicles),
@@ -848,6 +848,7 @@ export class AppController extends BaseController {
           Logger.log(
             `Want update CoDriver assignTo with driver id:${driverDoc.id}`,
           );
+          let coDriverData: CoDriverUnitUpdateRequest;
           if (editRequestData?.coDriverId) {
             const updateDriver = await requestedCoDriver.updateOne({
               assignTo: driverDoc.firstName + ' ' + driverDoc.lastName,
@@ -855,43 +856,44 @@ export class AppController extends BaseController {
               vehicleId: driverDoc.vehicleId,
               currentVehicle: driverDoc.currentVehicle,
             });
+            coDriverData = {
+              driverId: requestedCoDriver.id,
+              coDriverId: driverDoc._id || null,
+              deviceId: eldDetails?.id || null,
+              eldNo: eldDetails?.eldNo || null,
+              deviceVersion: eldDetails?.deviceVersion || '',
+              deviceModel: eldDetails?.deviceName || '',
+              deviceSerialNo: eldDetails?.serialNo || null,
+              deviceVendor: eldDetails?.vendor || null,
+              manualVehicleId: vehicleDetails?.data?.vehicleId || null,
+              vehicleId: vehicleDetails?.data?.id || null,
+              vehicleLicensePlateNo:
+                vehicleDetails?.data?.licensePlateNo || null,
+              vehicleMake: vehicleDetails?.data?.make || null,
+              vehicleVinNo: vehicleDetails?.data?.vinNo || null,
+            };
+            // Co Driver Unit update
+            await this.appService.updateCoDriverUnit(coDriverData);
+          } else {
+            coDriverData = {
+              driverId: requestedCoDriver.id,
+              coDriverId: driverDoc._id || null,
+              deviceId: eldDetails?.id || null,
+              eldNo: eldDetails?.eldNo || null,
+              deviceVersion: eldDetails?.deviceVersion || '',
+              deviceModel: eldDetails?.deviceName || '',
+              deviceSerialNo: eldDetails?.serialNo || null,
+              deviceVendor: eldDetails?.vendor || null,
+              manualVehicleId: vehicleDetails?.data?.vehicleId || null,
+              vehicleId: vehicleDetails?.data?.id || null,
+              vehicleLicensePlateNo:
+                vehicleDetails?.data?.licensePlateNo || null,
+              vehicleMake: vehicleDetails?.data?.make || null,
+              vehicleVinNo: vehicleDetails?.data?.vinNo || null,
+            };
+            // Co Driver Unit update
+            await this.appService.updateCoDriverUnit(coDriverData);
           }
-
-          const coDriverData: CoDriverUnitUpdateRequest = {
-            driverId: requestedCoDriver.id,
-            coDriverId: editRequestData?.coDriverId ? driverDoc._id : null,
-            deviceId: editRequestData?.coDriverId ? eldDetails?.id : null,
-            eldNo: editRequestData?.coDriverId ? eldDetails?.eldNo : null,
-            deviceVersion: editRequestData?.coDriverId
-              ? eldDetails?.deviceVersion
-              : '',
-            deviceModel: editRequestData?.coDriverId
-              ? eldDetails?.deviceName
-              : '',
-            deviceSerialNo: editRequestData?.coDriverId
-              ? eldDetails?.serialNo
-              : null,
-            deviceVendor: editRequestData?.coDriverId
-              ? eldDetails?.vendor
-              : null,
-            manualVehicleId: editRequestData?.coDriverId
-              ? vehicleDetails?.data?.vehicleId
-              : null,
-            vehicleId: editRequestData?.coDriverId
-              ? vehicleDetails?.data?.id
-              : null,
-            vehicleLicensePlateNo: editRequestData?.coDriverId
-              ? vehicleDetails?.data?.licensePlateNo
-              : null,
-            vehicleMake: editRequestData?.coDriverId
-              ? vehicleDetails?.data?.make
-              : null,
-            vehicleVinNo: editRequestData?.coDriverId
-              ? vehicleDetails?.data?.vinNo
-              : null,
-          };
-          // Co Driver Unit update
-          await this.appService.updateCoDriverUnit(coDriverData);
         }
         Logger.log(`Driver updated with response :${result}`);
         return response.status(HttpStatus.OK).send({
