@@ -63,6 +63,7 @@ import { uploadDocument } from 'shared/documentUpload';
 import { getDocuments } from 'shared/getDocuments';
 import moment from 'moment';
 import { DriverVehicleToUnitRequest } from 'models/driverVehicleRequest';
+import { CoDriverUnitUpdateRequest } from 'models/coDriverUnitRequest';
 @Controller('driver')
 @ApiTags('Driver')
 export class AppController extends BaseController {
@@ -322,18 +323,11 @@ export class AppController extends BaseController {
           driverModel.vehicleId,
         );
         vehicleDetails.data['assignedDrivers'] = JSON.parse(
-          JSON.stringify(vehicleDetails?.data.assignedDrivers),
+          JSON.stringify(vehicleDetails?.data?.assignedDrivers),
         );
       }
       Logger.log(`validation when add Driver through addAndUpdate method`);
-      // previous code by farzan
-      // const { requestedCoDriver } = await addOrUpdate(
-      //   this.appService,
-      //   driverModel,
-      //   option,
-      // );
-
-      const { requestedCoDriver } = await addOrUpdateCoDriver(
+      const { requestedCoDriver } = await addOrUpdate(
         this.appService,
         driverModel,
         option,
@@ -401,10 +395,19 @@ export class AppController extends BaseController {
       const office = await this.appService.populateOffices(
         driverRequest.homeTerminalAddress.toString(),
       );
-      // driverRequest.homeTerminalAddress = office?.data;
-      driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
+      driverRequest.homeTerminalAddress = office?.data?.id;
+      // driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
+
+      if (requestedCoDriver) {
+        driverRequest.assignTo =
+          requestedCoDriver.firstName + ' ' + requestedCoDriver.lastName;
+        driverRequest.coDriverId = requestedCoDriver.id;
+      } else {
+        driverRequest.assignTo = null;
+      }
       const driverDoc = await this.appService.register(driverRequest);
-      // FOr the main driver
+
+      // For the main driver if vehicle exist then assigned driver to vechile
       if (vehicleDetails?.data) {
         await this.appService.assignDriverInAssignedVehicles(
           vehicleDetails?.data,
@@ -417,10 +420,11 @@ export class AppController extends BaseController {
         );
       }
 
-      // For co driver
+      // For co driver vehicle assigment
       if (
         driverModel.coDriverId &&
-        JSON.stringify(driverModel.isCoDriver) == 'true'
+        JSON.stringify(driverModel.isCoDriver) == 'true' &&
+        driverModel.vehicleId
       ) {
         let flag = false;
         if (requestedCoDriver['_doc'].assignedVehicles.length > 0)
@@ -449,24 +453,23 @@ export class AppController extends BaseController {
               })(),
             });
             await requestedCoDriver.save();
+
+            // For the co driver if vehicle exist then assigned driver to vechile
+            await this.appService.assignDriverInAssignedVehicles(
+              vehicleDetails?.data,
+              {
+                _id: requestedCoDriver['_doc']._id,
+                email: requestedCoDriver['_doc'].email,
+                userName: requestedCoDriver['_doc'].userName,
+                phoneNumber: requestedCoDriver['_doc'].phoneNumber,
+              },
+            );
           }
-          await this.appService.assignDriverInAssignedVehicles(
-            vehicleDetails?.data,
-            {
-              _id: requestedCoDriver['_doc']._id,
-              email: requestedCoDriver['_doc'].email,
-              userName: requestedCoDriver['_doc'].userName,
-              phoneNumber: requestedCoDriver['_doc'].phoneNumber,
-            },
-          );
         }
       }
 
       console.log('outside if\n\n');
       if (driverDoc && Object.keys(driverDoc).length > 0) {
-        // const office = await this.appService.populateOffices(
-        //   driverDoc.homeTerminalAddress.toString(),
-        // );
         console.log('inside if\n\n');
         let eldDetails;
         if (vehicleDetails?.data?.eldId) {
@@ -513,7 +516,7 @@ export class AppController extends BaseController {
           vehicleVinNo: vehicleDetails?.data?.vinNo,
           tenantId: driverDoc?.tenantId || tenantId,
         };
-        const resp = await this.appService.updateDriverUnit(unitData);
+        await this.appService.updateDriverUnit(unitData);
 
         let model: DriverDocument = await getDocuments(
           driverDoc,
@@ -524,12 +527,32 @@ export class AppController extends BaseController {
           Logger.log(
             `Want update CoDriver assignTo with driver id:${driverDoc.id}`,
           );
-          const updateDriver = await requestedCoDriver.updateOne({
-            assignTo: driverDoc.id,
-            vehicleId: driverDoc.vehicleId || requestedCoDriver.vehicleId,
-            currentVehicle:
-              driverDoc.currentVehicle || requestedCoDriver.currentVehicle,
+
+          // Update Co driver with main driver
+          await requestedCoDriver.updateOne({
+            assignTo: driverDoc.firstName + ' ' + driverDoc.lastName,
+            coDriverId: driverDoc.id,
+            vehicleId: driverDoc.vehicleId,
+            currentVehicle: driverDoc.currentVehicle,
           });
+
+          const coDriverData: CoDriverUnitUpdateRequest = {
+            driverId: requestedCoDriver.id,
+            coDriverId: driverDoc._id,
+            deviceId: eldDetails?.id || null,
+            eldNo: eldDetails?.eldNo || null,
+            deviceVersion: eldDetails?.deviceVersion || '',
+            deviceModel: eldDetails?.deviceName || '',
+            deviceSerialNo: eldDetails?.serialNo || null,
+            deviceVendor: eldDetails?.vendor || null,
+            manualVehicleId: vehicleDetails?.data?.vehicleId || null,
+            vehicleId: vehicleDetails?.data?.id || null,
+            vehicleLicensePlateNo: vehicleDetails?.data?.licensePlateNo || null,
+            vehicleMake: vehicleDetails?.data?.make || null,
+            vehicleVinNo: vehicleDetails?.data?.vinNo || null,
+          };
+          // Co Driver Unit update
+          await this.appService.updateCoDriverUnit(coDriverData);
         }
         // add data of driver.
         // await addNewDriverLogs()
@@ -610,11 +633,7 @@ export class AppController extends BaseController {
         delete editRequestData.vehicleId;
       }
 
-      if (
-        editRequestData.vehicleId
-        // &&
-        // driver.vehicleId != editRequestData.vehicleId // this code is to not update the vehicle every time driver gets update
-      ) {
+      if (editRequestData.vehicleId) {
         option.$or.push({ vehicleId: editRequestData.vehicleId });
         vehicleDetails = await this.appService.populateVehicle(
           editRequestData.vehicleId,
@@ -625,15 +644,14 @@ export class AppController extends BaseController {
           );
         }
       }
-      const { requestedCoDriver, isCodriverUpdated } =
-        await addAndUpdateCodriver(
-          this.appService,
-          editRequestData,
-          option,
-          id,
-          vehicleDetails?.data,
-          driver,
-        );
+      const { requestedCoDriver } = await addAndUpdateCodriver(
+        this.appService,
+        editRequestData,
+        option,
+        id,
+        vehicleDetails?.data,
+        driver,
+      );
       let driverRequest = await uploadDocument(
         files?.driverDocument,
         files?.profile,
@@ -657,7 +675,7 @@ export class AppController extends BaseController {
         }
       });
       driverRequest.currentVehicle =
-        vehicleDetails?.data?.vehicleId || driverRequest.currentVehicle;
+        vehicleDetails?.data?.vehicleId || driverRequest.currentVehicle || null;
       if (driver) {
         driverRequest['assignedVehicles'] = JSON.parse(
           JSON.stringify(driver['_doc'].assignedVehicles),
@@ -701,7 +719,7 @@ export class AppController extends BaseController {
         driverRequest.homeTerminalAddress.toString(),
       );
       // driverRequest.homeTerminalAddress = office?.data;
-      driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
+      // driverRequest.homeTerminalTimeZone = office?.data?.timeZone;
       const driverDoc = await this.appService.updateDriver(id, driverRequest);
       // if (isCodriverUpdated) {
       //   const oldCoDriver = await (
@@ -711,12 +729,71 @@ export class AppController extends BaseController {
       //   // editRequestData.coDriverId = driverDoc.id;
       // }
 
+      // For co driver vehcile assignment
+      if (
+        editRequestData.coDriverId &&
+        editRequestData.isCoDriver == 'true' &&
+        editRequestData.vehicleId
+      ) {
+        let flag = false;
+        if (requestedCoDriver) {
+          if (requestedCoDriver['_doc'].assignedVehicles.length > 0)
+            for (
+              let i = 0;
+              i < requestedCoDriver['_doc'].assignedVehicles.length;
+              i++
+            ) {
+              if (
+                requestedCoDriver['_doc'].assignedVehicles[i].id ==
+                vehicleDetails?.data.id
+              ) {
+                flag = true;
+              }
+            }
+
+          if (!flag) {
+            if (vehicleDetails?.data) {
+              requestedCoDriver['_doc'].assignedVehicles.push({
+                id: vehicleDetails?.data.id,
+                vehicleId: vehicleDetails?.data.vehicleId,
+                vinNo: vehicleDetails?.data.vinNo,
+                date: (() => {
+                  const date = moment().format('YYYY-MM-DD');
+                  return date;
+                })(),
+              });
+              await requestedCoDriver.save();
+            }
+            await this.appService.assignDriverInAssignedVehicles(
+              vehicleDetails?.data,
+              {
+                _id: requestedCoDriver['_doc']._id,
+                email: requestedCoDriver['_doc'].email,
+                userName: requestedCoDriver['_doc'].userName,
+                phoneNumber: requestedCoDriver['_doc'].phoneNumber,
+              },
+            );
+          }
+        }
+      }
       if (driverDoc && Object.keys(driverDoc).length > 0) {
         let eldDetails;
 
         if (vehicleDetails?.data?.eldId) {
           eldDetails = await this.appService.populateEld(
             vehicleDetails?.data?.eldId,
+          );
+        }
+        // For the main driver
+        if (vehicleDetails?.data) {
+          await this.appService.assignDriverInAssignedVehicles(
+            vehicleDetails?.data,
+            {
+              _id: driverDoc._id,
+              email: driverDoc.email,
+              userName: driverDoc.userName,
+              phoneNumber: driverDoc.phoneNumber,
+            },
           );
         }
 
@@ -767,6 +844,57 @@ export class AppController extends BaseController {
           this.appService,
         );
         const result: DriverResponse = new DriverResponse(model);
+        if (requestedCoDriver && Object.keys(requestedCoDriver).length > 0) {
+          Logger.log(
+            `Want update CoDriver assignTo with driver id:${driverDoc.id}`,
+          );
+          let coDriverData: CoDriverUnitUpdateRequest;
+          if (editRequestData?.coDriverId) {
+            const updateDriver = await requestedCoDriver.updateOne({
+              assignTo: driverDoc.firstName + ' ' + driverDoc.lastName,
+              coDriverId: driverDoc.id,
+              vehicleId: driverDoc.vehicleId,
+              currentVehicle: driverDoc.currentVehicle,
+            });
+            coDriverData = {
+              driverId: requestedCoDriver.id,
+              coDriverId: driverDoc._id || null,
+              deviceId: eldDetails?.id || null,
+              eldNo: eldDetails?.eldNo || null,
+              deviceVersion: eldDetails?.deviceVersion || '',
+              deviceModel: eldDetails?.deviceName || '',
+              deviceSerialNo: eldDetails?.serialNo || null,
+              deviceVendor: eldDetails?.vendor || null,
+              manualVehicleId: vehicleDetails?.data?.vehicleId || null,
+              vehicleId: vehicleDetails?.data?.id || null,
+              vehicleLicensePlateNo:
+                vehicleDetails?.data?.licensePlateNo || null,
+              vehicleMake: vehicleDetails?.data?.make || null,
+              vehicleVinNo: vehicleDetails?.data?.vinNo || null,
+            };
+            // Co Driver Unit update
+            await this.appService.updateCoDriverUnit(coDriverData);
+          } else {
+            coDriverData = {
+              driverId: requestedCoDriver.id,
+              coDriverId: driverDoc._id || null,
+              deviceId: eldDetails?.id || null,
+              eldNo: eldDetails?.eldNo || null,
+              deviceVersion: eldDetails?.deviceVersion || '',
+              deviceModel: eldDetails?.deviceName || '',
+              deviceSerialNo: eldDetails?.serialNo || null,
+              deviceVendor: eldDetails?.vendor || null,
+              manualVehicleId: vehicleDetails?.data?.vehicleId || null,
+              vehicleId: vehicleDetails?.data?.id || null,
+              vehicleLicensePlateNo:
+                vehicleDetails?.data?.licensePlateNo || null,
+              vehicleMake: vehicleDetails?.data?.make || null,
+              vehicleVinNo: vehicleDetails?.data?.vinNo || null,
+            };
+            // Co Driver Unit update
+            await this.appService.updateCoDriverUnit(coDriverData);
+          }
+        }
         Logger.log(`Driver updated with response :${result}`);
         return response.status(HttpStatus.OK).send({
           message: 'Driver has been updated successfully',
@@ -1188,5 +1316,25 @@ export class AppController extends BaseController {
         data: [],
       };
     }
+  }
+  @UseInterceptors(new MessagePatternResponseInterceptor())
+  @MessagePattern({ cmd: 'get_assigned_driver_by_vehicleId' })
+  async tcp_getAssignedDriverByVehicleId(id: string): Promise<any> {
+    let driver;
+    let exception;
+    try {
+      let option: FilterQuery<DriverDocument> = {
+        $and: [{ vehicleId: id }, { isActive: true }],
+      };
+      driver = await this.appService.findOne(option);
+
+      if (!driver) {
+        throw new NotFoundException('Driver not found');
+      }
+    } catch (error) {
+      exception = error;
+    }
+
+    return driver ?? exception;
   }
 }

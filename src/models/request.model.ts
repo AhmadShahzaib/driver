@@ -181,4 +181,5 @@ export class DriverModel {
   personalConveyance: string;
   vehicles: [{}];
   currentVehicle: any;
+  assignTo: string;
 }

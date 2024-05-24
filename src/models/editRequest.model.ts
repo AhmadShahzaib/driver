@@ -172,4 +172,5 @@ export class EditDriverModel {
   personalConveyance: string;
   vehicles: [{}];
   currentVehicle: any;
+  assignTo: string;
 }
