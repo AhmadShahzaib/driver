@@ -1317,4 +1317,24 @@ export class AppController extends BaseController {
       };
     }
   }
+  @UseInterceptors(new MessagePatternResponseInterceptor())
+  @MessagePattern({ cmd: 'get_assigned_driver_by_vehicleId' })
+  async tcp_getAssignedDriverByVehicleId(id: string): Promise<any> {
+    let driver;
+    let exception;
+    try {
+      let option: FilterQuery<DriverDocument> = {
+        $and: [{ vehicleId: id }, { isActive: true }],
+      };
+      driver = await this.appService.findOne(option);
+
+      if (!driver) {
+        throw new NotFoundException('Driver not found');
+      }
+    } catch (error) {
+      exception = error;
+    }
+
+    return driver ?? exception;
+  }
 }
