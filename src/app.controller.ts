@@ -61,7 +61,7 @@ import { UnitData } from 'models/unitData';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { uploadDocument } from 'shared/documentUpload';
 import { getDocuments } from 'shared/getDocuments';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { DriverVehicleToUnitRequest } from 'models/driverVehicleRequest';
 import { CoDriverUnitUpdateRequest } from 'models/coDriverUnitRequest';
 @Controller('driver')
@@ -981,7 +981,8 @@ export class AppController extends BaseController {
       const options: FilterQuery<DriverDocument> = {};
       // const options = {};
       const { search, orderBy, orderType, pageNo, limit } = queryParams;
-      const { tenantId: id } = request.user ?? ({ tenantId: undefined } as any);
+      const { tenantId: id, timeZone } =
+        request.user ?? ({ tenantId: undefined } as any);
 
       let isActive = queryParams?.isActive;
       let arr = [];
@@ -1075,7 +1076,11 @@ export class AppController extends BaseController {
             jsonUser.deviceModel = unitInfo.data.deviceModel || '';
           }
         }
-
+        if (timeZone?.tzCode) {
+          jsonUser.createdAt = moment
+            .tz(jsonUser.createdAt, timeZone?.tzCode)
+            .format('DD/MM/YYYY h:mm a');
+        }
         jsonUser.id = driver.id;
         jsonUser.homeTerminalAddress = office.data;
 
