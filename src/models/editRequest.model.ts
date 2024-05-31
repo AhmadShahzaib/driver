@@ -82,7 +82,7 @@ export class EditDriverModel {
   phoneNumber: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  // @IsNotEmpty()
   homeTerminalTimeZone: StringOrTimeZone;
 
   @IsOptional()
@@ -172,4 +172,5 @@ export class EditDriverModel {
   personalConveyance: string;
   vehicles: [{}];
   currentVehicle: any;
+  assignTo: string;
 }

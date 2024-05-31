@@ -15,31 +15,29 @@ import { DriverValidatorResponse } from '../models';
 import { FilterQuery } from 'mongoose';
 
 export const addValidations = async (
-  
   driver: DriverDocument | EditDriverModel,
   driverModel: DriverModel | EditDriverModel,
- 
 ) => {
   try {
-   
     if (driver?.email.toLowerCase() == driverModel.email.toLowerCase()) {
-      Logger.log(`Email already exists`);
-      throw new ConflictException(`Email already exists`);
+      Logger.log(`Driver email already exists`);
+      throw new ConflictException(`Driver email already exists`);
     }
     if (driver?.userName.toLowerCase() == driverModel.userName.toLowerCase()) {
       Logger.log(`Username already exist`);
-      throw new ConflictException(`Username already exists`);
+      throw new ConflictException(`Driver ID already exists`);
     }
-    if (driver?.phoneNumber && driver?.phoneNumber == driverModel.phoneNumber) {
-      Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
-      throw new ConflictException(`Phone number already exists`);
+    if (
+      driver?.licenseNumber.toLowerCase() ==
+      driverModel.licenseNumber.toLowerCase()
+    ) {
+      Logger.log(`Driver license number already exists`);
+      throw new ConflictException(`Driver license number already exists`);
     }
-
-
- 
-
-    
-   
+    // if (driver?.phoneNumber && driver?.phoneNumber == driverModel.phoneNumber) {
+    //   Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
+    //   throw new ConflictException(`Phone number already exists`);Driver license number already exists
+    // }
   } catch (err) {
     throw err;
   }

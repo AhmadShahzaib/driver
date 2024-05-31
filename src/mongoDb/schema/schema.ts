@@ -32,7 +32,7 @@ export const DriverSchema = new mongoose.Schema(
     deviceType: { type: String },
     homeTerminalTimeZone: { type: TimeZoneSchema, required: true },
     homeTerminalAddress: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       required: true,
     },
     state: { type: String, required: true },
@@ -52,6 +52,7 @@ export const DriverSchema = new mongoose.Schema(
     assignedVehicles: [], // stores the assigned vehicles from day one
     currentVehicle: String,
     driverProfile: { type: Documents, required: false },
+    client: { required: false },
     documents: { type: [Documents], required: false },
     deviceVersion: { type: String, required: false },
     deviceModel: { type: String, required: false },
@@ -65,7 +66,7 @@ export const DriverSchema = new mongoose.Schema(
     isDeleted: { type: Boolean, default: false },
     personalConveyance: { type: Boolean, required: true },
     tenantId: { type: Schema.Types.ObjectId },
-    assignTo: { type: Schema.Types.ObjectId, default: null },
+    assignTo: String,
   },
   {
     timestamps: true,

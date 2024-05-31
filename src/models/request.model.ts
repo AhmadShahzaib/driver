@@ -89,7 +89,7 @@ export class DriverModel {
   @ApiProperty({
     type: String,
   })
-  @IsNotEmpty()
+  // @IsNotEmpty()
   homeTerminalTimeZone: StringOrTimeZone;
 
   @ApiProperty()
@@ -181,4 +181,5 @@ export class DriverModel {
   personalConveyance: string;
   vehicles: [{}];
   currentVehicle: any;
+  assignTo: string;
 }

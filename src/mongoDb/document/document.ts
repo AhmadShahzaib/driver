@@ -19,7 +19,7 @@ export default interface DriverDocument extends Document {
   homeTerminalAddress: string;
   state: string;
   phoneNumber: string;
-  isCoDriver?:boolean;
+  isCoDriver?: boolean;
   homeTerminalTimeZone?: StringOrTimeZone;
   password: string;
   licenseNumber: string;
@@ -35,11 +35,12 @@ export default interface DriverDocument extends Document {
   enableElog: boolean;
   cycleRule: string;
   deviceToken?: string;
+  client: any;
   deviceType?: string;
   yardMove: boolean;
   personalConveyance: boolean;
   isActive: boolean;
-  assignTo: string;
+  assignTo?: string;
   eldInfo: any;
   deviceVersion?: string;
   deviceModel?: string;
