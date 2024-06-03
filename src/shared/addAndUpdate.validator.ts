@@ -1,4 +1,3 @@
-import { DriverResponse } from '../models/response.model';
 import { DriverModel } from '../models/request.model';
 import { EditDriverModel } from '../models/editRequest.model';
 import { AppService } from '../app.service';
@@ -14,6 +13,7 @@ import timezones from 'timezones-list';
 import { DriverValidatorResponse } from '../models';
 import { FilterQuery } from 'mongoose';
 import moment from 'moment';
+import { CoDriverUnitUpdateRequest } from 'models/coDriverUnitRequest';
 
 export const addAndUpdateCodriver = async (
   appService: AppService,
@@ -39,26 +39,19 @@ export const addAndUpdateCodriver = async (
     }
     let requestedCoDriver: DriverDocument | null = null;
     let isCodriverUpdated: boolean = false;
+    let codriver = currentDriver.get('coDriverId', String);
 
     // if (driver?.vehicleId.toString() == driverModel.vehicleId) {
     //   Logger.log(`${driverModel.vehicleId} already exist`);
     //   throw new ConflictException(`${driverModel.vehicleId} already exists`);
     // }
+
     // Checking for coDriver and his availability.
-    let codriver = currentDriver.get('coDriverId', String);
     if (
       driverModel.isCoDriver == 'true' &&
       driverModel.coDriverId &&
       codriver != driverModel?.coDriverId
     ) {
-      // throw new BadRequestException(
-      //   `coDriver Functionality is under development. `,
-      // );
-      // delete driverModel.vehicleId;
-      // delete driverModel.coDriverId;
-
-      let isCoDriverUpdating: boolean = true;
-
       requestedCoDriver = await appService.findDriverCo({
         _id: driverModel.coDriverId,
       });
@@ -70,9 +63,6 @@ export const addAndUpdateCodriver = async (
         driverModel.assignTo =
           requestedCoDriver.firstName + ' ' + requestedCoDriver.lastName;
         isCodriverUpdated = true;
-        // requestedCoDriver.assignTo ==
-        //   driverModel.firstName + ' ' + driverModel.lastName;
-        // requestedCoDriver?.coDriverId == driverModel.driverId;
         let codriverData: any = JSON.stringify(requestedCoDriver);
         codriverData = JSON.parse(codriverData);
         codriverData.assignTo =
@@ -115,12 +105,34 @@ export const addAndUpdateCodriver = async (
           oldRequestedCoDriver = await appService.findOne({
             _id: codriver,
           });
+
+          // last previous codriver unassigned to main driver and update
           if (oldRequestedCoDriver) {
             let previousCoDriver: any = JSON.stringify(oldRequestedCoDriver);
             previousCoDriver = JSON.parse(previousCoDriver);
             previousCoDriver.assignTo = null;
             previousCoDriver.coDriverId = null;
+            previousCoDriver.vehicleId = null;
+            previousCoDriver.currentVehicle = null;
             await appService.updateDriver(codriver, previousCoDriver);
+
+            // last previous codriver unit update
+            const coDriverData: CoDriverUnitUpdateRequest = {
+              driverId: codriver,
+              coDriverId: null,
+              deviceId: null,
+              eldNo: null,
+              deviceVersion: '',
+              deviceSerialNo: null,
+              deviceVendor: null,
+              manualVehicleId: null,
+              vehicleId: null,
+              vehicleLicensePlateNo: null,
+              vehicleMake: null,
+              vehicleVinNo: null,
+            };
+            // Co Driver Unit update
+            await appService.updateCoDriverUnit(coDriverData);
           }
         }
       } else if (!requestedCoDriver) {
@@ -140,6 +152,8 @@ export const addAndUpdateCodriver = async (
       codriverData = JSON.parse(codriverData);
       codriverData.assignTo = null;
       codriverData.coDriverId = null;
+      codriverData.vehicleId = null;
+      codriverData.currentVehicle = null;
       await appService.updateDriver(codriver, codriverData);
     } else if (
       driverModel.isCoDriver == 'true' &&
@@ -170,6 +184,7 @@ export const addAndUpdateCodriver = async (
     //   }
     //   // Finding timezone object
     // }
+
     const getOffice = await appService.populateOffices(
       driverModel.homeTerminalAddress,
     );

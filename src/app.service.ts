@@ -27,6 +27,7 @@ import { EditDriverModel } from './models/editRequest.model';
 import { DriverLoginResponse } from './models/driverLoginResponse.model';
 import { TimeZone } from 'models';
 import { DriverVehicleToUnitRequest } from 'models/driverVehicleRequest';
+import { CoDriverUnitUpdateRequest } from 'models/coDriverUnitRequest';
 
 @Injectable()
 export class AppService extends BaseService<DriverDocument> {
@@ -270,7 +271,7 @@ export class AppService extends BaseService<DriverDocument> {
   findDriverCo = async (options): Promise<DriverDocument> => {
     try {
       options.isDeleted = false;
-      return await this.driverModel.findOne(options).lean();
+      return await this.driverModel.findOne(options);
     } catch (err) {
       this.logger.error({ message: err.message, stack: err.stack });
       throw err;
@@ -374,20 +375,15 @@ export class AppService extends BaseService<DriverDocument> {
     }
   };
 
-  driverClient = async (
-    id: string,
-    client: any,
-  ): Promise<DriverDocument> => {
+  driverClient = async (id: string, client: any): Promise<DriverDocument> => {
     try {
-      return await this.driverModel
-        .findByIdAndUpdate(
-          id,
-          { client: client },
-          {
-            new: true,
-          },
-        )
-       
+      return await this.driverModel.findByIdAndUpdate(
+        id,
+        { client: client },
+        {
+          new: true,
+        },
+      );
     } catch (err) {
       this.logger.error({ message: err.message, stack: err.stack });
       throw err;
@@ -739,6 +735,18 @@ export class AppService extends BaseService<DriverDocument> {
           { cmd: 'assign_driver_to_unit' },
           driverVehicleData,
         ),
+      );
+      return resp;
+    } catch (error) {
+      this.logger.error({ error });
+      throw error;
+    }
+  };
+
+  updateCoDriverUnit = async (coDriverData: CoDriverUnitUpdateRequest) => {
+    try {
+      const resp = await firstValueFrom(
+        this.unitClient.emit({ cmd: 'co_driver_update_unit' }, coDriverData),
       );
       return resp;
     } catch (error) {
