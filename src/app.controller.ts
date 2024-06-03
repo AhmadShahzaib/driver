@@ -315,7 +315,7 @@ export class AppController extends BaseController {
       driver = await this.appService.findOne(option);
 
       if (driver) {
-        throw new ConflictException(`Driver Already exist with same driver Id`);
+        throw new ConflictException(`Driver Already exists with same driver Id`);
       }
       let vehicleDetails;
       if (driverModel.vehicleId === '') {
