@@ -222,6 +222,7 @@ export class AppService extends BaseService<DriverDocument> {
         violations: [],
         status: {},
         lastKnownActivity: {},
+        clock:{},
         homeTerminalTimeZone: result['_doc']['homeTerminalTimeZone'],
         tenantId: '',
       };
