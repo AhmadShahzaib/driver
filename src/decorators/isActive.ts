@@ -12,7 +12,7 @@ import { DriverResponse } from '../models/response.model';
 export default function IsActiveDecorators() {
   const IsActiveDecorators: Array<CombineDecoratorType> = [
     Patch('/status/:id'),
-    SetMetadata('permissions', [DRIVER.EDIT]),
+    SetMetadata('permissions', [DRIVER.DEACTIVATE]),
     ApiBearerAuth('access-token'),
     ApiResponse({ status: HttpStatus.OK, type: DriverResponse }),
   ];
