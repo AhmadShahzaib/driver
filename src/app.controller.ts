@@ -297,7 +297,7 @@ export class AppController extends BaseController {
         $and: [],
         $or: [
           { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
-          { phoneNumber: driverModel.phoneNumber },
+          // { phoneNumber: driverModel.phoneNumber },
           {
             licenseNumber: {
               $regex: new RegExp(`^${driverModel.licenseNumber}`, 'i'),
@@ -308,10 +308,14 @@ export class AppController extends BaseController {
       };
       option['$and'].push({ tenantId: tenantId });
       Logger.log(`Calling request data validator from addUsers`);
-      const driver = await this.appService.findOne(option);
+      let driver = await this.appService.findOne(option);
       await addValidations(driver, driverModel);
+      option.$and = [];
+      option.$or = [ { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } }];
+      driver = await this.appService.findOne(option);
+
       if (driver) {
-        throw new ConflictException(`Driver Already exist`);
+        throw new ConflictException(`Driver Already exists with same driver Id`);
       }
       let vehicleDetails;
       if (driverModel.vehicleId === '') {
