@@ -310,6 +310,11 @@ export class AppController extends BaseController {
       Logger.log(`Calling request data validator from addUsers`);
       let driver = await this.appService.findOne(option);
       await addValidations(driver, driverModel);
+      option.$and = [
+        { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
+      ];
+      option.$or = [{}];
+      driver = await this.appService.findOne(option);
       if (driver) {
         throw new ConflictException(
           `Driver Already exists with same driver Id`,
