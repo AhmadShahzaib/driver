@@ -208,7 +208,7 @@ export class AppService extends BaseService<DriverDocument> {
       );
       console.log('New Id' + result['_doc']['_id']);
       const driverId = result['_doc']['_id'];
-      let recordMade = {
+      const recordMade = {
         driverId: driverId,
         date: '',
         driverName: result['_doc']['firstName'] + result['_doc']['lastName'],
@@ -565,7 +565,7 @@ export class AppService extends BaseService<DriverDocument> {
     try {
       console.log(`IM in driver service`);
 
-      let deviceTokens = [];
+      const deviceTokens = [];
       const driverQuery = await this.driverModel.find({
         _id: {
           $in: id,
@@ -634,7 +634,7 @@ export class AppService extends BaseService<DriverDocument> {
     }
   };
 
-  isVehicleAssigned = async (vehicleId: String, driverId?: String) => {
+  isVehicleAssigned = async (vehicleId: string, driverId?: string) => {
     try {
       const resp = await firstValueFrom(
         this.unitClient.send(
@@ -653,12 +653,12 @@ export class AppService extends BaseService<DriverDocument> {
   };
 
   updateVehicleAssigned = async (
-    vehicleId: String,
-    driverId: String,
-    coDriverId: String,
-    firstName: String,
-    lastName: String,
-    manualDriverId: String,
+    vehicleId: string,
+    driverId: string,
+    coDriverId: string,
+    firstName: string,
+    lastName: string,
+    manualDriverId: string,
     driverLicense: string,
     trailerNumber: string,
     driverUserName: string,

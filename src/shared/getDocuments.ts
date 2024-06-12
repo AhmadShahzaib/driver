@@ -6,7 +6,7 @@ export const getDocuments = async (
   awsService: AppService,
 ): Promise<DriverDocument> => {
   if (driver?.driverProfile?.key) {
-    let url = await awsService.getObject(driver.driverProfile.key);
+    const url = await awsService.getObject(driver.driverProfile.key);
    
     if(driver.driverProfile["_doc"])
     {
