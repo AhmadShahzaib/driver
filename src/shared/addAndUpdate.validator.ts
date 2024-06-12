@@ -39,7 +39,7 @@ export const addAndUpdateCodriver = async (
     }
     let requestedCoDriver: DriverDocument | null = null;
     let isCodriverUpdated: boolean = false;
-    let codriver = currentDriver.get('coDriverId', String);
+    const codriver = currentDriver.get('coDriverId', String);
 
     // if (driver?.vehicleId.toString() == driverModel.vehicleId) {
     //   Logger.log(`${driverModel.vehicleId} already exist`);

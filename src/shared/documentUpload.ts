@@ -13,7 +13,7 @@ export const uploadDocument = async (
   if (doc && doc.length > 0) {
     driverModel.documents = [];
     doc?.forEach(async (item) => {
-      let key = await appService.uploadFile(
+      const key = await appService.uploadFile(
         item?.buffer,
         `${tenantId}/${driverModel.email}/driverDocuments/${moment().unix()}-${
           item?.originalname
@@ -29,7 +29,7 @@ export const uploadDocument = async (
   }
   if (profile) {
     try {
-      let keyProfile = await appService.uploadFile(
+      const keyProfile = await appService.uploadFile(
         profile[0]?.buffer,
         `${tenantId}/${driverModel.email}/driverProfile/${moment().unix()}-${
           profile[0]?.originalname

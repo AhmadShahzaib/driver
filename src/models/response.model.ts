@@ -56,7 +56,7 @@ export class DriverResponse extends BaseResponseType {
   @ApiProperty()
   homeTerminalAddress?: Schema.Types.ObjectId;
   @ApiProperty()
-  state?: String;
+  state?: string;
   @ApiProperty()
   driverProfile: Profile;
   @ApiProperty({ isArray: true, type: Doc })

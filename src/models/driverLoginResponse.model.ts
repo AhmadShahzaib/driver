@@ -11,7 +11,7 @@ export class DriverLoginResponse extends BaseResponseType {
   firstName: string;
   lastName: string;
   homeTerminalAddress?: Schema.Types.ObjectId;
-  state?: String;
+  state?: string;
   homeTerminalTimeZone?: TimeZone;
   vehicleId: Schema.Types.ObjectId;
   coDriver: Schema.Types.ObjectId;

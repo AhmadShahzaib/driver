@@ -339,7 +339,7 @@ export class AppController extends BaseController {
         driverModel,
         option,
       );
-      let driverRequest = await uploadDocument(
+      const driverRequest = await uploadDocument(
         files?.driverDocument,
         files?.profile,
         this.appService,
@@ -525,7 +525,7 @@ export class AppController extends BaseController {
         };
         await this.appService.updateDriverUnit(unitData);
 
-        let model: DriverDocument = await getDocuments(
+        const model: DriverDocument = await getDocuments(
           driverDoc,
           this.appService,
         );
@@ -659,7 +659,7 @@ export class AppController extends BaseController {
         vehicleDetails?.data,
         driver,
       );
-      let driverRequest = await uploadDocument(
+      const driverRequest = await uploadDocument(
         files?.driverDocument,
         files?.profile,
         this.appService,
@@ -846,7 +846,7 @@ export class AppController extends BaseController {
 
         const resp = await this.appService.updateDriverUnit(unitData);
 
-        let model: DriverDocument = await getDocuments(
+        const model: DriverDocument = await getDocuments(
           driverDoc,
           this.appService,
         );
@@ -992,7 +992,7 @@ export class AppController extends BaseController {
         request.user ?? ({ tenantId: undefined } as any);
 
       let isActive = queryParams?.isActive;
-      let arr = [];
+      const arr = [];
       arr.push(isActive);
       if (arr.includes('true')) {
         isActive = true;
@@ -1038,7 +1038,7 @@ export class AppController extends BaseController {
         query.sort({ createdAt: 1 });
       }
 
-      let total = await this.appService.count(options);
+      const total = await this.appService.count(options);
       let queryResponse;
       if (!limit || !isNaN(limit)) {
         query.skip(((pageNo ?? 1) - 1) * (limit ?? 10)).limit(limit ?? 10);
@@ -1059,7 +1059,7 @@ export class AppController extends BaseController {
               jsonUser.coDriverId &&
               Object.keys(jsonUser.coDriverId).length > 0
             ) {
-              let coDriver = new DriverResponse(jsonUser.coDriverId);
+              const coDriver = new DriverResponse(jsonUser.coDriverId);
               coDriver.id = driver.coDriverId.id;
               jsonUser.coDriverId = coDriver;
             }
@@ -1165,7 +1165,7 @@ export class AppController extends BaseController {
         offices,
         vehicle = null;
 
-      if (!!id) {
+      if (id) {
         Logger.log(`find DriverById`);
         driver = await this.appService.findDriverById(id, true);
         Logger.log(`Driver with id: ${id} was found`);
@@ -1174,7 +1174,7 @@ export class AppController extends BaseController {
       }
 
       if (driver && Object.keys(driver).length > 0) {
-        if (!!driver.homeTerminalAddress) {
+        if (driver.homeTerminalAddress) {
           Logger.log(`want to populate the Office`);
           offices = await this.appService.populateOffices(
             driver.homeTerminalAddress.toString(),
@@ -1182,7 +1182,7 @@ export class AppController extends BaseController {
           Logger.log(`populated office`);
           // log info/debug for office object, if it was found or not
         }
-        if (!!driver.vehicleId) {
+        if (driver.vehicleId) {
           Logger.log(`want to populate the vehicle from vehicle service`);
           vehicle = await this.appService.populateVehicle(
             driver.vehicleId.toString(),
@@ -1201,7 +1201,7 @@ export class AppController extends BaseController {
           driverJson.coDriverId &&
           Object.keys(driverJson.coDriverId).length > 0
         ) {
-          let coDriver = new DriverResponse(driverJson.coDriverId);
+          const coDriver = new DriverResponse(driverJson.coDriverId);
           coDriver.id = driver.coDriverId.id;
           driverJson.coDriverId = coDriver;
         }
@@ -1229,7 +1229,7 @@ export class AppController extends BaseController {
   @MessagePattern({ cmd: 'get_driver_by_email' })
   async tcp_geDriverByIdentity(email: string): Promise<DriverResponse | Error> {
     try {
-      let option = {
+      const option = {
         isActive: true,
         email: email,
       };
@@ -1314,7 +1314,7 @@ export class AppController extends BaseController {
   @MessagePattern({ cmd: 'get_drivers_by_ids' })
   async tcp_getDriversByIds(id: []): Promise<any> {
     try {
-      let deviceTokens = await this.appService.findDriversByIds(id);
+      const deviceTokens = await this.appService.findDriversByIds(id);
       console.log(`driver service ---- `, deviceTokens);
       if (deviceTokens.length < 1) {
         throw new NotFoundException('Driver tokens not found');
@@ -1335,7 +1335,7 @@ export class AppController extends BaseController {
     let driver;
     let exception;
     try {
-      let option: FilterQuery<DriverDocument> = {
+      const option: FilterQuery<DriverDocument> = {
         $and: [{ vehicleId: id }, { isActive: true }],
       };
       driver = await this.appService.findOne(option);
