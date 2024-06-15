@@ -129,6 +129,9 @@ export class AppService extends BaseService<DriverDocument> {
             // other device is still logged in
             if (!allowLogin) {
               return Promise.resolve(new NotFoundException('loggedIn'));
+            }else if (allowLogin) {
+            // write function here to send silent notification to driver previous device so he logsout from there. 
+            // Farzan write here
             }
           }
         }
