@@ -87,6 +87,7 @@ export class AppController extends BaseController {
         deviceToken,
         deviceType,
         deviceModel,
+        allowLogin,
         deviceVersion,
       }: Login = userLogin;
       const driverLogin = await this.appService.login(
@@ -97,9 +98,10 @@ export class AppController extends BaseController {
         deviceType,
         deviceModel,
         deviceVersion,
+        allowLogin,
       );
-      const driverProfile = await getDocuments(driverLogin, this.appService);
       if (driverLogin.driverProfile) {
+        const driverProfile = await getDocuments(driverLogin, this.appService);
         // driverLogin.driverProfile['imagePath'] = '';
       }
       if (driverLogin && Object.keys(driverLogin).length > 0) {

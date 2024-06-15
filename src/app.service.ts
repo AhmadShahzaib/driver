@@ -96,6 +96,7 @@ export class AppService extends BaseService<DriverDocument> {
     deviceType: string,
     deviceVersion: string,
     deviceModel: string,
+    allowLogin: boolean,
   ): Promise<any | Error> => {
     try {
       let option: FilterQuery<DriverDocument>;
@@ -118,6 +119,19 @@ export class AppService extends BaseService<DriverDocument> {
         return Promise.resolve(
           new NotFoundException('The login email you entered is incorrect'),
         );
+      }
+      let previousToken = driver.get('deviceToken', String);
+      if (previousToken) {
+        //if its not first time login
+        if (previousToken != deviceToken) {
+          //device changed
+          if (previousToken !== '') {
+            // other device is still logged in
+            if (!allowLogin) {
+              return Promise.resolve(new NotFoundException('loggedIn'));
+            }
+          }
+        }
       }
       if (deviceToken) {
         await this.driverModel.findByIdAndUpdate(
@@ -222,7 +236,7 @@ export class AppService extends BaseService<DriverDocument> {
         violations: [],
         status: {},
         lastKnownActivity: {},
-        clock:{},
+        clock: {},
         homeTerminalTimeZone: result['_doc']['homeTerminalTimeZone'],
         tenantId: '',
       };

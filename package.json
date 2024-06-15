@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Driver Service",
   "license": "",
+  
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "ts-node -r tsconfig-paths/register src/main.ts",
