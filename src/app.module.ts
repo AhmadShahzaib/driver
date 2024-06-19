@@ -101,6 +101,22 @@ import { ConfigModule } from '@nestjs/config';
       inject: [ConfigurationService],
     },
     {
+      provide: 'PUSH_NOTIFICATION_SERVICE',
+      useFactory: (config: ConfigurationService) => {
+        const officeServicePort = config.get('PUSH_NOTIFICATION_MICROSERVICE_PORT');
+        const officeServiceHost = config.get('PUSH_NOTIFICATION_MICROSERVICE_HOST');
+
+        return ClientProxyFactory.create({
+          transport: Transport.TCP,
+          options: {
+            port: Number(officeServicePort),
+            host: officeServiceHost,
+          },
+        });
+      },
+      inject: [ConfigurationService],
+    },
+    {
       provide: 'UNIT_SERVICE',
       useFactory: (config: ConfigurationService) => {
         const unitServicePort = config.get('UNIT_MICROSERVICE_PORT');

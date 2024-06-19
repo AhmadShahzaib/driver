@@ -28,7 +28,7 @@ import { DriverLoginResponse } from './models/driverLoginResponse.model';
 import { TimeZone } from 'models';
 import { DriverVehicleToUnitRequest } from 'models/driverVehicleRequest';
 import { CoDriverUnitUpdateRequest } from 'models/coDriverUnitRequest';
-
+import {dispatchNotification} from "./utils/dispatchNotification";
 @Injectable()
 export class AppService extends BaseService<DriverDocument> {
   private readonly logger = new Logger('Driver Service');
@@ -40,6 +40,8 @@ export class AppService extends BaseService<DriverDocument> {
     @Inject('OFFICE_SERVICE') private readonly officeClient: ClientProxy,
     @Inject('HOS_SERVICE') private readonly hosClient: ClientProxy,
     @Inject('UNIT_SERVICE') private readonly unitClient: ClientProxy,
+    @Inject('PUSH_NOTIFICATION_SERVICE')
+    private readonly pushNotificationClient: ClientProxy,
     private readonly awsClient: AwsClient,
   ) {
     super();
@@ -84,6 +86,14 @@ export class AppService extends BaseService<DriverDocument> {
   }
 
   //
+  updateDeviceToken = async(data)=>{
+    const updatedUser = await this.driverModel.findByIdAndUpdate(
+      data.id,           // The ID of the user to update
+      { deviceToken: data.deviceToken },// The update object
+      { new: true }     // Options: { new: true } returns the updated document
+    );
+    return updatedUser;
+  }
   //
   //
   //
@@ -130,6 +140,26 @@ export class AppService extends BaseService<DriverDocument> {
             if (!allowLogin) {
               return Promise.resolve(new NotFoundException('loggedIn'));
             }else if (allowLogin) {
+              const title = 'Logout From this device';
+              const notificationObj = {
+                logs: [],
+                dateTime: "date",
+                driverId: driver.get('_id', String),
+                notificationType: 4,
+                editStatusFromBO: 'delete',
+              };
+              const deviceInfo = {
+                deviceToken: previousToken,
+                deviceType: driver.get('deviceType', String),
+              };
+        
+              await dispatchNotification(
+                title,
+                notificationObj,
+                deviceInfo,
+                this.pushNotificationClient,
+                true, // repressents notification is silent or not
+              );
             // write function here to send silent notification to driver previous device so he logsout from there. 
             // Farzan write here
             }

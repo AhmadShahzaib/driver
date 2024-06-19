@@ -117,6 +117,18 @@ export class AppController extends BaseController {
     }
   }
 
+  @MessagePattern({ cmd: 'update_driver_device_token' })
+  async tcp_updateDriver(data) {
+    try {
+      const updateDriver = await this.appService.updateDeviceToken(data);
+      // driverLogin.driverProfile['imagePath'] = '';
+      Logger.log(`driver data get successfully`);
+      return updateDriver;
+    } catch (err) {
+      Logger.error({ message: err.message, stack: err.stack });
+      return err;
+    }
+  }
   @UseInterceptors(MessagePatternResponseInterceptor)
   @MessagePattern({ cmd: 'update_Unit' })
   async tcp_updateDriveUnitr(unit: UnitData): Promise<any | Error> {
