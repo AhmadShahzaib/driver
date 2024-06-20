@@ -154,14 +154,19 @@ export class AppService extends BaseService<DriverDocument> {
                 deviceToken: previousToken,
                 deviceType: driver.get('deviceType', String),
               };
+              Logger.log('about to disptch notification');
+              try {
+                await dispatchNotification(
+                  title,
+                  notificationObj,
+                  deviceInfo,
+                  this.pushNotificationClient,
+                  true, // repressents notification is silent or not
+                );
+              } catch (error) {
+                Logger.log(error);
+              }
 
-              await dispatchNotification(
-                title,
-                notificationObj,
-                deviceInfo,
-                this.pushNotificationClient,
-                true, // repressents notification is silent or not
-              );
               // write function here to send silent notification to driver previous device so he logsout from there.
               // Farzan write here
             }
