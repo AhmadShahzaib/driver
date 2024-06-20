@@ -145,7 +145,7 @@ export class AppService extends BaseService<DriverDocument> {
                 logs: [],
                 dateTime: "date",
                 driverId: driver.get('_id', String),
-                notificationType: 4,
+                notificationType: 6,
                 editStatusFromBO: 'delete',
               };
               const deviceInfo = {
