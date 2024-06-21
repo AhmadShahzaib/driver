@@ -968,10 +968,39 @@ export class AppController extends BaseController {
     //   );
     // }
     try {
-      const driverStatus = await this.appService.driverStatus(id, isActive);
+      const driver = await this.appService.findOne({ _id: { $eq: id } });
+      if (driver && driver?.coDriverId) {
+        throw new ConflictException(
+          'The requested Co-Driver is already assigned to another driver or has a Co-Driver assigned to him.',
+        );
+      }
+      let driverStatus;
+      if (driver?.vehicleId && !isActive) {
+        driverStatus =
+          await this.appService.driverStatusUpdateAndVehicleUnassign(
+            id,
+            isActive,
+          );
+      } else {
+        driverStatus = await this.appService.driverStatus(id, isActive);
+      }
 
       if (driverStatus && Object.keys(driverStatus).length > 0) {
-        await this.appService.updateStatusInUnitService(id, isActive);
+        const dataUpdate = {
+          isActive,
+          vehicleId: null,
+          manualVehicleId: null,
+          vehicleLicensePlateNo: null,
+          vehicleMake: null,
+          vehicleVinNo: null,
+          deviceId: null,
+          eldNo: null,
+          deviceVersion: '',
+          deviceModel: '',
+          deviceSerialNo: null,
+          deviceVendor: null,
+        };
+        await this.appService.updateStatusInUnitService(id, dataUpdate);
         const result: DriverResponse = new DriverResponse(driverStatus);
         Logger.log(
           `Driver status changed with id :${id} and response ${result}`,
