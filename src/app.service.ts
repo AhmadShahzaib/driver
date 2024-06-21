@@ -434,6 +434,26 @@ export class AppService extends BaseService<DriverDocument> {
     }
   };
 
+  driverStatusUpdateAndVehicleUnassign = async (
+    id: string,
+    status: boolean,
+  ): Promise<DriverDocument> => {
+    try {
+      return await this.driverModel
+        .findByIdAndUpdate(
+          id,
+          { isActive: status, vehicleId: null, currentVehicle: null },
+          {
+            new: true,
+          },
+        )
+        .and([{ isDeleted: false }]);
+    } catch (err) {
+      this.logger.error({ message: err.message, stack: err.stack });
+      throw err;
+    }
+  };
+
   driverClient = async (id: string, client: any): Promise<DriverDocument> => {
     try {
       return await this.driverModel.findByIdAndUpdate(
@@ -773,12 +793,12 @@ export class AppService extends BaseService<DriverDocument> {
   // }
   // }
 
-  updateStatusInUnitService = async (id, status) => {
+  updateStatusInUnitService = async (id, dataUpdate) => {
     try {
       return await firstValueFrom(
         this.unitClient.emit(
           { cmd: 'change_driver_status' },
-          { driverId: id, isActive: status },
+          { driverId: id, dataUpdate },
         ),
       );
     } catch (error) {
