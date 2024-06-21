@@ -52,7 +52,7 @@ import {
   addOrUpdateCoDriver,
 } from './shared/addAndUpdate.validator';
 import { addValidations } from './shared/add.validator';
-
+import DeviceCheckDecorators from './decorators/deviceCheck'
 import { MessagePattern } from '@nestjs/microservices';
 import { DriverLoginResponse } from './models/driverLoginResponse.model';
 import { ResetPasswordRequest } from './models/resetPasswordRequest.model';
@@ -1154,6 +1154,52 @@ export class AppController extends BaseController {
               : limit ?? 10),
         ),
       });
+    } catch (error) {
+      Logger.error({ message: error.message, stack: error.stack });
+      throw error;
+    }
+  }
+  // check if driver is loggedin with any different device
+  @DeviceCheckDecorators()
+  async loggedDevice(
+    @Query('id', MongoIdValidationPipe) id: string,
+    @Query('deviceToken') deviceToken: string,
+    @Res() response: Response,
+    @Req() req: Request,
+  ) {
+    try {
+      const driver = await this.appService.findOne({ _id: { $eq: id } });
+
+    
+      
+      let previousToken = driver.get('deviceToken', String);
+      if (previousToken) {
+        //if its not first time login
+        if (previousToken != deviceToken) {
+          //device changed
+          if (previousToken !== '') {
+            // other device is still logged in
+            return response.status(HttpStatus.OK).send({
+              message: 'Driver found',
+              alreadyLoggedIn: true,
+            });
+          }
+        }
+      }
+      return response.status(HttpStatus.OK).send({
+        message: 'Driver found',
+        alreadyLoggedIn: false,
+      });
+      // if (result && Object.keys(result).length > 0) {
+      //   const deletedDriver = new DriverResponse(result);
+      //   Logger.log(`Driver deleted with id:${id}`);
+      //   return response.status(HttpStatus.OK).send({
+      //     message: 'Driver has been deleted successfully',
+      //   });
+      // } else {
+      //   Logger.log(`Driver not deleted with id:${id}`);
+      //   throw new NotFoundException(`${id} not exist`);
+      // }
     } catch (error) {
       Logger.error({ message: error.message, stack: error.stack });
       throw error;
