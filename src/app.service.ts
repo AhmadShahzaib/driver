@@ -28,7 +28,7 @@ import { DriverLoginResponse } from './models/driverLoginResponse.model';
 import { TimeZone } from 'models';
 import { DriverVehicleToUnitRequest } from 'models/driverVehicleRequest';
 import { CoDriverUnitUpdateRequest } from 'models/coDriverUnitRequest';
-
+import { dispatchNotification } from './utils/dispatchNotification';
 @Injectable()
 export class AppService extends BaseService<DriverDocument> {
   private readonly logger = new Logger('Driver Service');
@@ -40,6 +40,8 @@ export class AppService extends BaseService<DriverDocument> {
     @Inject('OFFICE_SERVICE') private readonly officeClient: ClientProxy,
     @Inject('HOS_SERVICE') private readonly hosClient: ClientProxy,
     @Inject('UNIT_SERVICE') private readonly unitClient: ClientProxy,
+    @Inject('PUSH_NOTIFICATION_SERVICE')
+    private readonly pushNotificationClient: ClientProxy,
     private readonly awsClient: AwsClient,
   ) {
     super();
@@ -84,6 +86,14 @@ export class AppService extends BaseService<DriverDocument> {
   }
 
   //
+  updateDeviceToken = async (data) => {
+    const updatedUser = await this.driverModel.findByIdAndUpdate(
+      data.id, // The ID of the user to update
+      { deviceToken: data.deviceToken }, // The update object
+      { new: true }, // Options: { new: true } returns the updated document
+    );
+    return updatedUser;
+  };
   //
   //
   //
@@ -96,9 +106,11 @@ export class AppService extends BaseService<DriverDocument> {
     deviceType: string,
     deviceVersion: string,
     deviceModel: string,
+    allowLogin: boolean,
   ): Promise<any | Error> => {
     try {
       let option: FilterQuery<DriverDocument>;
+      let loggedIn = false;
       option = {
         $and: [
           { isDeleted: false, isActive: true },
@@ -119,45 +131,89 @@ export class AppService extends BaseService<DriverDocument> {
           new NotFoundException('The login email you entered is incorrect'),
         );
       }
-      if (deviceToken) {
-        await this.driverModel.findByIdAndUpdate(
-          driver.id,
-          { $set: { deviceToken: deviceToken } },
-          {
-            new: true,
-          },
-        );
+      let previousToken = driver.get('deviceToken', String);
+      if (previousToken) {
+        //if its not first time login
+        if (previousToken != deviceToken) {
+          //device changed
+          if (previousToken !== '') {
+            // other device is still logged in
+            if (!allowLogin) {
+              // return Promise.resolve(new NotFoundException('loggedIn'));
+              loggedIn = true;
+            } else if (allowLogin) {
+              const title = 'Logout From this device';
+              const notificationObj = {
+                logs: [],
+                dateTime: 'date',
+                driverId: driver.get('_id', String),
+                notificationType: 6,
+                editStatusFromBO: 'delete',
+              };
+              const deviceInfo = {
+                deviceToken: previousToken,
+                deviceType: driver.get('deviceType', String),
+              };
+              Logger.log('about to disptch notification');
+              try {
+                await dispatchNotification(
+                  title,
+                  notificationObj,
+                  deviceInfo,
+                  this.pushNotificationClient,
+                  true, // repressents notification is silent or not
+                );
+              } catch (error) {
+                Logger.log(error);
+              }
+
+              // write function here to send silent notification to driver previous device so he logsout from there.
+              // Farzan write here
+            }
+          }
+        }
       }
-      if (deviceType != '') {
-        await this.driverModel.findByIdAndUpdate(
-          driver.id,
-          { $set: { deviceType: deviceType } },
-          {
-            new: true,
-          },
-        );
-      }
-      if (deviceVersion != '') {
-        const res = await this.driverModel.findByIdAndUpdate(
-          driver.id,
-          { $set: { deviceVersion: deviceVersion } },
-          {
-            new: true,
-          },
-        );
-        Logger.log(
-          '=================================================================>>>>>>>>' +
-            res,
-        );
-      }
-      if (deviceModel) {
-        await this.driverModel.findByIdAndUpdate(
-          driver.id,
-          { $set: { deviceModel: deviceModel } },
-          {
-            new: true,
-          },
-        );
+      if (!loggedIn) {
+        if (deviceToken) {
+          await this.driverModel.findByIdAndUpdate(
+            driver.id,
+            { $set: { deviceToken: deviceToken } },
+            {
+              new: true,
+            },
+          );
+        }
+        if (deviceType != '') {
+          await this.driverModel.findByIdAndUpdate(
+            driver.id,
+            { $set: { deviceType: deviceType } },
+            {
+              new: true,
+            },
+          );
+        }
+        if (deviceVersion != '') {
+          const res = await this.driverModel.findByIdAndUpdate(
+            driver.id,
+            { $set: { deviceVersion: deviceVersion } },
+            {
+              new: true,
+            },
+          );
+          Logger.log(
+            '=================================================================>>>>>>>>' +
+              res,
+          );
+        }
+        if (deviceModel) {
+          await this.driverModel.findByIdAndUpdate(
+            driver.id,
+            { $set: { deviceModel: deviceModel } },
+            {
+              new: true,
+            },
+          );
+        }
       }
       this.logger.log(`driver found`);
       const jsonDriver = driver.toJSON();
@@ -169,7 +225,9 @@ export class AppService extends BaseService<DriverDocument> {
           new UnauthorizedException('The password you entered is incorrect.'),
         );
       }
-
+      if (loggedIn) {
+        return Promise.resolve(new NotFoundException('loggedIn'));
+      }
       try {
         const res = await firstValueFrom(
           this.unitClient.send(
@@ -208,7 +266,7 @@ export class AppService extends BaseService<DriverDocument> {
       );
       console.log('New Id' + result['_doc']['_id']);
       const driverId = result['_doc']['_id'];
-      let recordMade = {
+      const recordMade = {
         driverId: driverId,
         date: '',
         driverName: result['_doc']['firstName'] + result['_doc']['lastName'],
@@ -222,7 +280,7 @@ export class AppService extends BaseService<DriverDocument> {
         violations: [],
         status: {},
         lastKnownActivity: {},
-        clock:{},
+        clock: {},
         homeTerminalTimeZone: result['_doc']['homeTerminalTimeZone'],
         tenantId: '',
       };
@@ -365,6 +423,26 @@ export class AppService extends BaseService<DriverDocument> {
         .findByIdAndUpdate(
           id,
           { isActive: status },
+          {
+            new: true,
+          },
+        )
+        .and([{ isDeleted: false }]);
+    } catch (err) {
+      this.logger.error({ message: err.message, stack: err.stack });
+      throw err;
+    }
+  };
+
+  driverStatusUpdateAndVehicleUnassign = async (
+    id: string,
+    status: boolean,
+  ): Promise<DriverDocument> => {
+    try {
+      return await this.driverModel
+        .findByIdAndUpdate(
+          id,
+          { isActive: status, vehicleId: null, currentVehicle: null },
           {
             new: true,
           },
@@ -565,7 +643,7 @@ export class AppService extends BaseService<DriverDocument> {
     try {
       console.log(`IM in driver service`);
 
-      let deviceTokens = [];
+      const deviceTokens = [];
       const driverQuery = await this.driverModel.find({
         _id: {
           $in: id,
@@ -634,7 +712,7 @@ export class AppService extends BaseService<DriverDocument> {
     }
   };
 
-  isVehicleAssigned = async (vehicleId: String, driverId?: String) => {
+  isVehicleAssigned = async (vehicleId: string, driverId?: string) => {
     try {
       const resp = await firstValueFrom(
         this.unitClient.send(
@@ -653,12 +731,12 @@ export class AppService extends BaseService<DriverDocument> {
   };
 
   updateVehicleAssigned = async (
-    vehicleId: String,
-    driverId: String,
-    coDriverId: String,
-    firstName: String,
-    lastName: String,
-    manualDriverId: String,
+    vehicleId: string,
+    driverId: string,
+    coDriverId: string,
+    firstName: string,
+    lastName: string,
+    manualDriverId: string,
     driverLicense: string,
     trailerNumber: string,
     driverUserName: string,
@@ -715,12 +793,12 @@ export class AppService extends BaseService<DriverDocument> {
   // }
   // }
 
-  updateStatusInUnitService = async (id, status) => {
+  updateStatusInUnitService = async (id, dataUpdate) => {
     try {
       return await firstValueFrom(
         this.unitClient.emit(
           { cmd: 'change_driver_status' },
-          { driverId: id, isActive: status },
+          { driverId: id, dataUpdate },
         ),
       );
     } catch (error) {

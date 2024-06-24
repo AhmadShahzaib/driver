@@ -26,7 +26,7 @@ export default interface DriverDocument extends Document {
   vehicleId?: string;
   vehicles: [{}];
   assignedVehicles: []; // stores the assigned vehicles from day one
-  currentVehicle: String;
+  currentVehicle: string;
   coDriverId?: string;
   tenantId?: string;
   notes?: string;

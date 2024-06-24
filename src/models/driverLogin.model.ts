@@ -6,4 +6,5 @@ export class Login {
   deviceType: string;
   deviceVersion: string;
   deviceModel: string;
+  allowLogin:boolean;
 }
