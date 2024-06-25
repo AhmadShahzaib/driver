@@ -206,6 +206,7 @@ export class AppService extends BaseService<DriverDocument> {
           );
         }
         if (deviceModel) {
+          Logger.log("model will be updated here----->",deviceModel)
           await this.driverModel.findByIdAndUpdate(
             driver.id,
             { $set: { deviceModel: deviceModel } },
