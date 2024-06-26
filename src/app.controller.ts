@@ -1115,9 +1115,9 @@ export class AppController extends BaseController {
                 unitInfo.data.meta.lastActivity.currentTime,
               'MMDDYYHHmmss',
             );
-            jsonUser.deviceVersion = unitInfo.data.deviceVersion || '';
+            // jsonUser.deviceVersion = unitInfo.data.deviceVersion || '';
             jsonUser.eldType = unitInfo.data.eldType || '';
-            jsonUser.deviceModel = unitInfo.data.deviceModel || '';
+            // jsonUser.deviceModel = unitInfo.data.deviceModel || '';
           }
         }
         if (timeZone?.tzCode) {
