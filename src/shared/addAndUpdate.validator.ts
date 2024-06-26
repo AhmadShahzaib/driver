@@ -33,10 +33,10 @@ export const addAndUpdateCodriver = async (
       Logger.log(`Username already exist`);
       throw new ConflictException(`Username already exists`);
     }
-    if (driver?.phoneNumber && driver?.phoneNumber == driverModel.phoneNumber) {
-      Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
-      throw new ConflictException(`Phone number already exists`);
-    }
+    // if (driver?.phoneNumber && driver?.phoneNumber == driverModel.phoneNumber) {
+    //   Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
+    //   throw new ConflictException(`Phone number already exists`);
+    // }
     let requestedCoDriver: DriverDocument | null = null;
     let isCodriverUpdated: boolean = false;
     const codriver = currentDriver.get('coDriverId', String);

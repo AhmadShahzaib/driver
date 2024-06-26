@@ -52,7 +52,7 @@ import {
   addOrUpdateCoDriver,
 } from './shared/addAndUpdate.validator';
 import { addValidations } from './shared/add.validator';
-import DeviceCheckDecorators from './decorators/deviceCheck'
+import DeviceCheckDecorators from './decorators/deviceCheck';
 import { MessagePattern } from '@nestjs/microservices';
 import { DriverLoginResponse } from './models/driverLoginResponse.model';
 import { ResetPasswordRequest } from './models/resetPasswordRequest.model';
@@ -633,7 +633,7 @@ export class AppController extends BaseController {
       const option: FilterQuery<DriverDocument> = {
         $or: [
           { email: { $regex: new RegExp(`^${editRequestData.email}`, 'i') } },
-          { phoneNumber: editRequestData.phoneNumber },
+          // { phoneNumber: editRequestData.phoneNumber },
           {
             licenseNumber: {
               $regex: new RegExp(`^${editRequestData.licenseNumber}`, 'i'),
@@ -1170,8 +1170,6 @@ export class AppController extends BaseController {
     try {
       const driver = await this.appService.findOne({ _id: { $eq: id } });
 
-    
-      
       let previousToken = driver.get('deviceToken', String);
       if (previousToken) {
         //if its not first time login
