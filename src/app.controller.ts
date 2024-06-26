@@ -308,7 +308,7 @@ export class AppController extends BaseController {
     try {
       // QQuery object
       const option: FilterQuery<DriverDocument> = {
-        $and: [],
+        $and: [{ tenantId: tenantId }],
         $or: [
           { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
           // { phoneNumber: driverModel.phoneNumber },
@@ -320,15 +320,9 @@ export class AppController extends BaseController {
           { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
         ],
       };
-      option['$and'].push({ tenantId: tenantId });
       Logger.log(`Calling request data validator from addUsers`);
       let driver = await this.appService.findOne(option);
       await addValidations(driver, driverModel);
-      option.$and = [
-        { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
-      ];
-      option.$or = [{}];
-      driver = await this.appService.findOne(option);
       if (driver) {
         throw new ConflictException(
           `Driver Already exists with same driver Id`,
@@ -645,7 +639,7 @@ export class AppController extends BaseController {
             },
           },
         ],
-        $and: [{ _id: { $ne: id } }],
+        $and: [{ _id: { $ne: id } }, { tenantId: tenantId }],
       };
 
       const driver = await this.appService.findOne({ _id: { $eq: id } });
@@ -1435,5 +1429,22 @@ export class AppController extends BaseController {
     }
 
     return driver ?? exception;
+  }
+  @UseInterceptors(new MessagePatternResponseInterceptor())
+  @MessagePattern({ cmd: 'get_drivers_by_vehicleIds' })
+  async tcp_getDriversByVehicleIds(vehicleIds: []): Promise<any> {
+    try {
+      const response = await this.appService.findDriversByVehicleIds(
+        vehicleIds,
+      );
+
+      return response;
+    } catch (error) {
+      return {
+        statusCode: 400,
+        message: error.message,
+        data: [],
+      };
+    }
   }
 }

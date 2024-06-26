@@ -37,6 +37,13 @@ export const addAndUpdateCodriver = async (
     //   Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
     //   throw new ConflictException(`Phone number already exists`);
     // }
+    if (
+      driver?.licenseNumber.toLowerCase() ==
+      driverModel.licenseNumber.toLowerCase()
+    ) {
+      Logger.log(`Driver license number already exists`);
+      throw new ConflictException(`Driver license number already exists`);
+    }
     let requestedCoDriver: DriverDocument | null = null;
     let isCodriverUpdated: boolean = false;
     const codriver = currentDriver.get('coDriverId', String);
