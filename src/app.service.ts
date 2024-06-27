@@ -206,6 +206,7 @@ export class AppService extends BaseService<DriverDocument> {
           );
         }
         if (deviceModel) {
+          Logger.log("model will be updated here----->",deviceModel)
           await this.driverModel.findByIdAndUpdate(
             driver.id,
             { $set: { deviceModel: deviceModel } },
@@ -259,11 +260,12 @@ export class AppService extends BaseService<DriverDocument> {
       }
       // driver.enableElog = "true"
       driver.password = await this.hashPassword(driver.password);
-      const result = await this.driverModel.findOneAndUpdate(
-        { email: driver.email },
-        driver,
-        { upsert: true, new: true },
-      );
+      // const result = await this.driverModel.findOneAndUpdate(
+      //   { email: driver.email },
+      //   driver,
+      //   { upsert: true, new: true },
+      // );
+      const result = await this.driverModel.create(driver);
       console.log('New Id' + result['_doc']['_id']);
       const driverId = result['_doc']['_id'];
       const recordMade = {
@@ -658,6 +660,21 @@ export class AppService extends BaseService<DriverDocument> {
       }
 
       return deviceTokens;
+    } catch (err) {
+      this.logger.error({ message: err.message, stack: err.stack });
+      throw err;
+    }
+  };
+
+  findDriversByVehicleIds = async (ids: []): Promise<any> => {
+    try {
+      const driverQuery = await this.driverModel.find({
+        currentVehicle: {
+          $in: ids,
+        },
+      });
+
+      return driverQuery;
     } catch (err) {
       this.logger.error({ message: err.message, stack: err.stack });
       throw err;
