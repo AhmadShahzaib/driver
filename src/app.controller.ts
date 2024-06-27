@@ -307,11 +307,10 @@ export class AppController extends BaseController {
     driverModel.tenantId = tenantId;
     try {
       // QQuery object
-      const option: FilterQuery<DriverDocument> = {
+      let option: FilterQuery<DriverDocument> = {
         $and: [{ tenantId: tenantId }],
         $or: [
           { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
-          // { phoneNumber: driverModel.phoneNumber },
           {
             licenseNumber: {
               $regex: new RegExp(`^${driverModel.licenseNumber}`, 'i'),
@@ -323,10 +322,15 @@ export class AppController extends BaseController {
       Logger.log(`Calling request data validator from addUsers`);
       let driver = await this.appService.findOne(option);
       await addValidations(driver, driverModel);
+
+      // QQuery object for multi tenant wise check driverId
+      option.$and = [
+        { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
+      ];
+      option.$or = [{}];
+      driver = await this.appService.findOne(option);
       if (driver) {
-        throw new ConflictException(
-          `Driver Already exists with same driver Id`,
-        );
+        throw new ConflictException(`Driver ID already exists`);
       }
       let vehicleDetails;
       if (driverModel.vehicleId === '') {
@@ -627,7 +631,6 @@ export class AppController extends BaseController {
       const option: FilterQuery<DriverDocument> = {
         $or: [
           { email: { $regex: new RegExp(`^${editRequestData.email}`, 'i') } },
-          // { phoneNumber: editRequestData.phoneNumber },
           {
             licenseNumber: {
               $regex: new RegExp(`^${editRequestData.licenseNumber}`, 'i'),
@@ -643,6 +646,7 @@ export class AppController extends BaseController {
       };
 
       const driver = await this.appService.findOne({ _id: { $eq: id } });
+
       let vehicleDetails;
       if (editRequestData.vehicleId === '') {
         delete editRequestData.vehicleId;
@@ -893,18 +897,29 @@ export class AppController extends BaseController {
             coDriverData = {
               driverId: requestedCoDriver.id,
               coDriverId: driverDoc._id || null,
-              deviceId: eldDetails?.id || null,
-              eldNo: eldDetails?.eldNo || null,
-              deviceVersion: eldDetails?.deviceVersion || '',
-              deviceModel: eldDetails?.deviceName || '',
-              deviceSerialNo: eldDetails?.serialNo || null,
-              deviceVendor: eldDetails?.vendor || null,
-              manualVehicleId: vehicleDetails?.data?.vehicleId || null,
-              vehicleId: vehicleDetails?.data?.id || null,
-              vehicleLicensePlateNo:
-                vehicleDetails?.data?.licensePlateNo || null,
-              vehicleMake: vehicleDetails?.data?.make || null,
-              vehicleVinNo: vehicleDetails?.data?.vinNo || null,
+              // deviceId: eldDetails?.id || null,
+              // eldNo: eldDetails?.eldNo || null,
+              // deviceVersion: eldDetails?.deviceVersion || '',
+              // deviceModel: eldDetails?.deviceName || '',
+              // deviceSerialNo: eldDetails?.serialNo || null,
+              // deviceVendor: eldDetails?.vendor || null,
+              // manualVehicleId: vehicleDetails?.data?.vehicleId || null,
+              // vehicleId: vehicleDetails?.data?.id || null,
+              // vehicleLicensePlateNo:
+              //   vehicleDetails?.data?.licensePlateNo || null,
+              // vehicleMake: vehicleDetails?.data?.make || null,
+              // vehicleVinNo: vehicleDetails?.data?.vinNo || null,
+              deviceId: null,
+              eldNo: null,
+              deviceVersion: '',
+              deviceModel: '',
+              deviceSerialNo: null,
+              deviceVendor: null,
+              manualVehicleId: null,
+              vehicleId: null,
+              vehicleLicensePlateNo: null,
+              vehicleMake: null,
+              vehicleVinNo: null,
             };
             // Co Driver Unit update
             await this.appService.updateCoDriverUnit(coDriverData);
