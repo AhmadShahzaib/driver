@@ -221,6 +221,8 @@ export class AppService extends BaseService<DriverDocument> {
       jsonDriver.id = driver.id;
       Logger.log(jsonDriver.password);
       const passwordMatch = await compare(password, jsonDriver.password);
+      Logger.log("password match ",passwordMatch);
+
       if (!passwordMatch) {
         this.logger.log(`password not match`);
         return Promise.resolve(
