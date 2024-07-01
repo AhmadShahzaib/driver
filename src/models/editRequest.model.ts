@@ -89,7 +89,7 @@ export class EditDriverModel {
   @ApiProperty()
   @MinLength(8)
   @IsString()
-  @MaxLength(20)
+  @MaxLength(30)
   password: string;
 
   @ApiProperty()

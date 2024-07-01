@@ -33,10 +33,26 @@ export const addAndUpdateCodriver = async (
       Logger.log(`Username already exist`);
       throw new ConflictException(`Username already exists`);
     }
-    if (driver?.phoneNumber && driver?.phoneNumber == driverModel.phoneNumber) {
-      Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
-      throw new ConflictException(`Phone number already exists`);
+    // if (driver?.phoneNumber && driver?.phoneNumber == driverModel.phoneNumber) {
+    //   Logger.log(`${driverModel.phoneNumber} Phone number already exists`);
+    //   throw new ConflictException(`Phone number already exists`);
+    // }
+    if (
+      driver?.licenseNumber.toLowerCase() ==
+      driverModel.licenseNumber.toLowerCase()
+    ) {
+      Logger.log(`Driver license number already exists`);
+      throw new ConflictException(`Driver license number already exists`);
     }
+    // option.$and = [
+    //   { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
+    //   { _id: { $ne: id } },
+    // ];
+    // option.$or = [{}];
+    // const driverIdtenant = await appService.findOne(option);
+    // if (driverIdtenant) {
+    //   throw new ConflictException(`Driver Already exists with same driver Id`);
+    // }
     let requestedCoDriver: DriverDocument | null = null;
     let isCodriverUpdated: boolean = false;
     const codriver = currentDriver.get('coDriverId', String);
