@@ -117,7 +117,7 @@ export class AppService extends BaseService<DriverDocument> {
           {
             $or: [
               { userName: { $regex: new RegExp(`^${userName}$`, 'i') } },
-              { email: { $regex: new RegExp(`^${userName}$`, 'i') } },
+            
              
             ],
           },
