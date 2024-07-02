@@ -116,9 +116,9 @@ export class AppService extends BaseService<DriverDocument> {
           { isDeleted: false, isActive: true },
           {
             $or: [
-              { email: { $regex: new RegExp(`^${userName}$`, 'i') } },
               { userName: { $regex: new RegExp(`^${userName}$`, 'i') } },
-              { phoneNumber: { $regex: new RegExp(`^${userName}$`, 'i') } },
+            
+             
             ],
           },
         ],
@@ -219,7 +219,10 @@ export class AppService extends BaseService<DriverDocument> {
       this.logger.log(`driver found`);
       const jsonDriver = driver.toJSON();
       jsonDriver.id = driver.id;
+      Logger.log(jsonDriver.password);
       const passwordMatch = await compare(password, jsonDriver.password);
+      Logger.log("password match ",passwordMatch);
+
       if (!passwordMatch) {
         this.logger.log(`password not match`);
         return Promise.resolve(
