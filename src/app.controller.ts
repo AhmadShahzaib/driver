@@ -44,6 +44,8 @@ import AddDecorators from './decorators/addDriver';
 import DeleteDecorators from './decorators/deleteDriver';
 import GetDecorators from './decorators/getDrivers';
 import GetByIdDecorators from './decorators/getDriverById';
+import GetByIdDecoratorsLogs from './decorators/getDriverByIdLogs';
+
 import IsActiveDecorators from './decorators/isActive';
 import UpdateByIdDecorators from './decorators/updateById';
 import {
@@ -281,7 +283,81 @@ export class AppController extends BaseController {
   //     throw error;
   //   }
   // }
+  @GetByIdDecoratorsLogs()
+  async getDriverByIdLogs(
+    @Query('id', MongoIdValidationPipe) id: string,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    try {
+      Logger.log(`getDriverById was called with params: ${id}`);
+      Logger.log(
+        `${req.method} request received from ${req.ip} for ${
+          req.originalUrl
+        } by: ${!res.locals.user ? 'Unauthorized User' : res.locals.user.id}`,
+      );
+      let driver,
+        offices,
+        vehicle = null;
 
+      if (id) {
+        Logger.log(`find DriverById`);
+        driver = await this.appService.findDriverById(id, true);
+        Logger.log(`Driver with id: ${id} was found`);
+      } else {
+        Logger.debug(`Driver against id: ${id} not found`);
+      }
+
+      if (driver && Object.keys(driver).length > 0) {
+        if (driver.homeTerminalAddress) {
+          Logger.log(`want to populate the Office`);
+          offices = await this.appService.populateOffices(
+            driver.homeTerminalAddress.toString(),
+          );
+          Logger.log(`populated office`);
+          // log info/debug for office object, if it was found or not
+        }
+        if (driver.vehicleId) {
+          Logger.log(`want to populate the vehicle from vehicle service`);
+          vehicle = await this.appService.populateVehicle(
+            driver.vehicleId.toString(),
+          );
+          Logger.log(`populated driver vehicle form vehicle address`);
+          // log info/debug for office vehicle, if it was found or not
+        }
+
+        const driverJson = driver.toJSON();
+       
+        driverJson.vehicleId = vehicle?.data || null;
+        driverJson.homeTerminalAddress = offices?.data || null;
+        driverJson.id = driver?.id;
+        if (
+          driverJson.coDriverId &&
+          Object.keys(driverJson.coDriverId).length > 0
+        ) {
+          const coDriver = new DriverResponse(driverJson.coDriverId);
+          coDriver.id = driver.coDriverId.id;
+          driverJson.coDriverId = coDriver;
+        }
+        const driverResponse: DriverResponse = new DriverResponse(driverJson);
+
+        if (driverResponse) {
+          Logger.log(`Driver found`);
+          //log about the response that response is being sent
+          return res.status(HttpStatus.OK).send({
+            message: 'Driver found',
+            data: driverResponse,
+          });
+        }
+      } else {
+        Logger.log(`Driver Not found with id:${id}`);
+        throw new NotFoundException('Driver not found');
+      }
+    } catch (error) {
+      Logger.error({ message: error.message, stack: error.stack });
+      throw error;
+    }
+  }
   /**
    * Dynamic driver creation
    * farzan-driverbook
