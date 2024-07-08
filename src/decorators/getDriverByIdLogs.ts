@@ -1,6 +1,6 @@
 import { Get, HttpStatus, SetMetadata } from '@nestjs/common';
 
-import { ApiBearerAuth, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 import {
   CombineDecorators,
@@ -11,11 +11,11 @@ import { DriverResponse } from '../models/response.model';
 
 export default function GetByIdDecoratorsLogs() {
   const GetByIdDecoratorsLogs: Array<CombineDecoratorType> = [
-    Get(':id'),
+    Get('driverForLogs'),
     SetMetadata('permissions', [DRIVER.LIST]),
     ApiBearerAuth('access-token'),
     ApiResponse({ status: HttpStatus.OK, type: DriverResponse }),
-    ApiParam({
+    ApiQuery({
       name: 'id',
       description: 'The ID of the driver you want to get.',
     }),
