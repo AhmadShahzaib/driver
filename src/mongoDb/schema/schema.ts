@@ -57,7 +57,7 @@ export const DriverSchema = new mongoose.Schema(
     deviceVersion: { type: String, required: false },
     deviceModel: { type: String, required: false },
     password: { type: String, required: true },
-    trailerNumber: { type: String },
+    trailerNumber: { type: String },//
     enableEld: { type: Boolean, required: true },
     enableElog: { type: Boolean, required: true },
     notes: { type: String, index: true },
