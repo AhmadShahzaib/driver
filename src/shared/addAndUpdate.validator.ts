@@ -139,7 +139,7 @@ export const addAndUpdateCodriver = async (
               deviceId: null,
               eldNo: null,
               deviceVersion: '',
-              deviceSerialNo: null,
+              deviceSerialNo: '',
               deviceVendor: null,
               manualVehicleId: null,
               vehicleId: null,

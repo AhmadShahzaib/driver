@@ -327,7 +327,7 @@ export class AppController extends BaseController {
         }
 
         const driverJson = driver.toJSON();
-       
+
         driverJson.vehicleId = vehicle?.data || null;
         driverJson.homeTerminalAddress = offices?.data || null;
         driverJson.id = driver?.id;
@@ -576,7 +576,7 @@ export class AppController extends BaseController {
           driverId: driverDoc?._id || null,
           coDriverId: driverDoc?.coDriverId || null,
           cycleRule: driverDoc?.cycleRule || null,
-          deviceSerialNo: eldDetails?.serialNo,
+          deviceSerialNo: eldDetails?.serialNo || '',
           deviceVendor: eldDetails?.vendor,
           driverFirstName: driverDoc?.firstName || '',
           driverLastName: driverDoc?.lastName || '',
@@ -638,7 +638,7 @@ export class AppController extends BaseController {
             eldNo: eldDetails?.eldNo || null,
             deviceVersion: eldDetails?.deviceVersion || '',
             deviceModel: eldDetails?.deviceName || '',
-            deviceSerialNo: eldDetails?.serialNo || null,
+            deviceSerialNo: eldDetails?.serialNo || '',
             deviceVendor: eldDetails?.vendor || null,
             manualVehicleId: vehicleDetails?.data?.vehicleId || null,
             vehicleId: vehicleDetails?.data?.id || null,
@@ -896,7 +896,7 @@ export class AppController extends BaseController {
           driverId: driverDoc?._id || null,
           coDriverId: driverDoc?.coDriverId || null,
           cycleRule: driverDoc?.cycleRule || null,
-          deviceSerialNo: eldDetails?.serialNo || null,
+          deviceSerialNo: eldDetails?.serialNo || '',
           deviceVendor: eldDetails?.vendor || null,
           driverFirstName: driverDoc?.firstName || '',
           driverLastName: driverDoc?.lastName || '',
@@ -958,7 +958,7 @@ export class AppController extends BaseController {
               eldNo: eldDetails?.eldNo || null,
               deviceVersion: eldDetails?.deviceVersion || '',
               deviceModel: eldDetails?.deviceName || '',
-              deviceSerialNo: eldDetails?.serialNo || null,
+              deviceSerialNo: eldDetails?.serialNo || '',
               deviceVendor: eldDetails?.vendor || null,
               manualVehicleId: vehicleDetails?.data?.vehicleId || null,
               vehicleId: vehicleDetails?.data?.id || null,
@@ -989,7 +989,7 @@ export class AppController extends BaseController {
               eldNo: null,
               deviceVersion: '',
               deviceModel: '',
-              deviceSerialNo: null,
+              deviceSerialNo: '',
               deviceVendor: null,
               manualVehicleId: null,
               vehicleId: null,
@@ -1082,7 +1082,7 @@ export class AppController extends BaseController {
           eldNo: null,
           deviceVersion: '',
           deviceModel: '',
-          deviceSerialNo: null,
+          deviceSerialNo: '',
           deviceVendor: null,
         };
         await this.appService.updateStatusInUnitService(id, dataUpdate);
