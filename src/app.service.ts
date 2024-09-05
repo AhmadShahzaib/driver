@@ -125,10 +125,24 @@ export class AppService extends BaseService<DriverDocument> {
       };
       this.logger.log(`check Driver exist or not`);
       const driver = await this.driverModel.findOne(option).exec();
+      
       if (!driver) {
         this.logger.log(`The login userName you entered is incorrect. `);
         return Promise.resolve(
           new NotFoundException('The login email you entered is incorrect'),
+        );
+      }
+      this.logger.log(`driver found`);
+      const jsonDriver = driver.toJSON();
+      jsonDriver.id = driver.id;
+      Logger.log(jsonDriver.password);
+      const passwordMatch = await compare(password, jsonDriver.password);
+      Logger.log("password match ",passwordMatch);
+
+      if (!passwordMatch) {
+        this.logger.log(`password not match`);
+        return Promise.resolve(
+          new UnauthorizedException('The password you entered is incorrect.'),
         );
       }
       let previousToken = driver.get('deviceToken', String);
@@ -216,19 +230,7 @@ export class AppService extends BaseService<DriverDocument> {
           );
         }
       }
-      this.logger.log(`driver found`);
-      const jsonDriver = driver.toJSON();
-      jsonDriver.id = driver.id;
-      Logger.log(jsonDriver.password);
-      const passwordMatch = await compare(password, jsonDriver.password);
-      Logger.log("password match ",passwordMatch);
-
-      if (!passwordMatch) {
-        this.logger.log(`password not match`);
-        return Promise.resolve(
-          new UnauthorizedException('The password you entered is incorrect.'),
-        );
-      }
+     
       if (loggedIn) {
         return Promise.resolve(new NotFoundException('loggedIn'));
       }
