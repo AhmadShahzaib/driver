@@ -115,17 +115,13 @@ export class AppService extends BaseService<DriverDocument> {
         $and: [
           { isDeleted: false, isActive: true },
           {
-            $or: [
-              { userName: { $regex: new RegExp(`^${userName}$`, 'i') } },
-            
-             
-            ],
+            $or: [{ userName: { $regex: new RegExp(`^${userName}$`, 'i') } }],
           },
         ],
       };
       this.logger.log(`check Driver exist or not`);
       const driver = await this.driverModel.findOne(option).exec();
-      
+
       if (!driver) {
         this.logger.log(`The login userName you entered is incorrect. `);
         return Promise.resolve(
@@ -137,7 +133,7 @@ export class AppService extends BaseService<DriverDocument> {
       jsonDriver.id = driver.id;
       Logger.log(jsonDriver.password);
       const passwordMatch = await compare(password, jsonDriver.password);
-      Logger.log("password match ",passwordMatch);
+      Logger.log('password match ', passwordMatch);
 
       if (!passwordMatch) {
         this.logger.log(`password not match`);
@@ -220,7 +216,7 @@ export class AppService extends BaseService<DriverDocument> {
           );
         }
         if (deviceModel) {
-          Logger.log("model will be updated here----->",deviceModel)
+          Logger.log('model will be updated here----->', deviceModel);
           await this.driverModel.findByIdAndUpdate(
             driver.id,
             { $set: { deviceModel: deviceModel } },
@@ -230,7 +226,7 @@ export class AppService extends BaseService<DriverDocument> {
           );
         }
       }
-     
+
       if (loggedIn) {
         return Promise.resolve(new NotFoundException('loggedIn'));
       }
@@ -253,6 +249,18 @@ export class AppService extends BaseService<DriverDocument> {
       this.logger.error({ message: err.message, stack: err.stack });
       throw err;
     }
+  };
+  getUnitById = async (id) => {
+    try {
+      const res = await firstValueFrom(
+        this.unitClient.send({ cmd: 'get_unit_by_driverId' }, id),
+      );
+      if (res.isError) {
+        Logger.log('Error in getting Device Serial No from Unit Service');
+        mapMessagePatternResponseToException(res);
+      }
+      return res;
+    } catch (err) {}
   };
 
   register = async (driver: DriverModel): Promise<DriverDocument> => {
