@@ -309,7 +309,7 @@ export class AppController extends BaseController {
       } else {
         Logger.debug(`Driver against id: ${id} not found`);
       }
-
+      driver = await this.appService.getUnitById(id)
       if (driver && Object.keys(driver).length > 0) {
         if (driver.homeTerminalAddress) {
           Logger.log(`want to populate the Office`);
