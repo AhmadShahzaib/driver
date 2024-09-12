@@ -43,7 +43,11 @@ import { AppService } from './app.service';
 import AddDecorators from './decorators/addDriver';
 import DeleteDecorators from './decorators/deleteDriver';
 import GetDecorators from './decorators/getDrivers';
+import GetDefaultDecorators from './decorators/getDriversDefault';
+
 import GetByIdDecorators from './decorators/getDriverById';
+import GetByIdDecoratorsLogs from './decorators/getDriverByIdLogs';
+
 import IsActiveDecorators from './decorators/isActive';
 import UpdateByIdDecorators from './decorators/updateById';
 import {
@@ -52,7 +56,7 @@ import {
   addOrUpdateCoDriver,
 } from './shared/addAndUpdate.validator';
 import { addValidations } from './shared/add.validator';
-import DeviceCheckDecorators from './decorators/deviceCheck'
+import DeviceCheckDecorators from './decorators/deviceCheck';
 import { MessagePattern } from '@nestjs/microservices';
 import { DriverLoginResponse } from './models/driverLoginResponse.model';
 import { ResetPasswordRequest } from './models/resetPasswordRequest.model';
@@ -281,7 +285,81 @@ export class AppController extends BaseController {
   //     throw error;
   //   }
   // }
+  @GetByIdDecoratorsLogs()
+  async getDriverByIdLogs(
+    @Query('id', MongoIdValidationPipe) id: string,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    try {
+      Logger.log(`getDriverById was called with params: ${id}`);
+      Logger.log(
+        `${req.method} request received from ${req.ip} for ${
+          req.originalUrl
+        } by: ${!res.locals.user ? 'Unauthorized User' : res.locals.user.id}`,
+      );
+      let driver,
+        offices,
+        vehicle = null;
 
+      if (id) {
+        Logger.log(`find DriverById`);
+        driver = await this.appService.findDriverById(id, true);
+        Logger.log(`Driver with id: ${id} was found`);
+      } else {
+        Logger.debug(`Driver against id: ${id} not found`);
+      }
+
+      if (driver && Object.keys(driver).length > 0) {
+        if (driver.homeTerminalAddress) {
+          Logger.log(`want to populate the Office`);
+          offices = await this.appService.populateOffices(
+            driver.homeTerminalAddress.toString(),
+          );
+          Logger.log(`populated office`);
+          // log info/debug for office object, if it was found or not
+        }
+        if (driver.vehicleId) {
+          Logger.log(`want to populate the vehicle from vehicle service`);
+          vehicle = await this.appService.populateVehicle(
+            driver.vehicleId.toString(),
+          );
+          Logger.log(`populated driver vehicle form vehicle address`);
+          // log info/debug for office vehicle, if it was found or not
+        }
+
+        const driverJson = driver.toJSON();
+
+        driverJson.vehicleId = vehicle?.data || null;
+        driverJson.homeTerminalAddress = offices?.data || null;
+        driverJson.id = driver?.id;
+        if (
+          driverJson.coDriverId &&
+          Object.keys(driverJson.coDriverId).length > 0
+        ) {
+          const coDriver = new DriverResponse(driverJson.coDriverId);
+          coDriver.id = driver.coDriverId.id;
+          driverJson.coDriverId = coDriver;
+        }
+        const driverResponse: DriverResponse = new DriverResponse(driverJson);
+
+        if (driverResponse) {
+          Logger.log(`Driver found`);
+          //log about the response that response is being sent
+          return res.status(HttpStatus.OK).send({
+            message: 'Driver found',
+            data: driverResponse,
+          });
+        }
+      } else {
+        Logger.log(`Driver Not found with id:${id}`);
+        throw new NotFoundException('Driver not found');
+      }
+    } catch (error) {
+      Logger.error({ message: error.message, stack: error.stack });
+      throw error;
+    }
+  }
   /**
    * Dynamic driver creation
    * farzan-driverbook
@@ -307,11 +385,10 @@ export class AppController extends BaseController {
     driverModel.tenantId = tenantId;
     try {
       // QQuery object
-      const option: FilterQuery<DriverDocument> = {
-        $and: [],
+      let option: FilterQuery<DriverDocument> = {
+        $and: [{ tenantId: tenantId }],
         $or: [
           { email: { $regex: new RegExp(`^${driverModel.email}`, 'i') } },
-          // { phoneNumber: driverModel.phoneNumber },
           {
             licenseNumber: {
               $regex: new RegExp(`^${driverModel.licenseNumber}`, 'i'),
@@ -320,19 +397,18 @@ export class AppController extends BaseController {
           { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
         ],
       };
-      option['$and'].push({ tenantId: tenantId });
       Logger.log(`Calling request data validator from addUsers`);
       let driver = await this.appService.findOne(option);
       await addValidations(driver, driverModel);
+
+      // QQuery object for multi tenant wise check driverId
       option.$and = [
         { userName: { $regex: new RegExp(`^${driverModel.userName}`, 'i') } },
       ];
       option.$or = [{}];
       driver = await this.appService.findOne(option);
       if (driver) {
-        throw new ConflictException(
-          `Driver Already exists with same driver Id`,
-        );
+        throw new ConflictException(`Driver ID already exists`);
       }
       let vehicleDetails;
       if (driverModel.vehicleId === '') {
@@ -502,7 +578,7 @@ export class AppController extends BaseController {
           driverId: driverDoc?._id || null,
           coDriverId: driverDoc?.coDriverId || null,
           cycleRule: driverDoc?.cycleRule || null,
-          deviceSerialNo: eldDetails?.serialNo,
+          deviceSerialNo: eldDetails?.serialNo || '',
           deviceVendor: eldDetails?.vendor,
           driverFirstName: driverDoc?.firstName || '',
           driverLastName: driverDoc?.lastName || '',
@@ -564,7 +640,7 @@ export class AppController extends BaseController {
             eldNo: eldDetails?.eldNo || null,
             deviceVersion: eldDetails?.deviceVersion || '',
             deviceModel: eldDetails?.deviceName || '',
-            deviceSerialNo: eldDetails?.serialNo || null,
+            deviceSerialNo: eldDetails?.serialNo || '',
             deviceVendor: eldDetails?.vendor || null,
             manualVehicleId: vehicleDetails?.data?.vehicleId || null,
             vehicleId: vehicleDetails?.data?.id || null,
@@ -633,7 +709,6 @@ export class AppController extends BaseController {
       const option: FilterQuery<DriverDocument> = {
         $or: [
           { email: { $regex: new RegExp(`^${editRequestData.email}`, 'i') } },
-          { phoneNumber: editRequestData.phoneNumber },
           {
             licenseNumber: {
               $regex: new RegExp(`^${editRequestData.licenseNumber}`, 'i'),
@@ -645,10 +720,11 @@ export class AppController extends BaseController {
             },
           },
         ],
-        $and: [{ _id: { $ne: id } }],
+        $and: [{ _id: { $ne: id } }, { tenantId: tenantId }],
       };
 
       const driver = await this.appService.findOne({ _id: { $eq: id } });
+
       let vehicleDetails;
       if (editRequestData.vehicleId === '') {
         delete editRequestData.vehicleId;
@@ -822,7 +898,7 @@ export class AppController extends BaseController {
           driverId: driverDoc?._id || null,
           coDriverId: driverDoc?.coDriverId || null,
           cycleRule: driverDoc?.cycleRule || null,
-          deviceSerialNo: eldDetails?.serialNo || null,
+          deviceSerialNo: eldDetails?.serialNo || '',
           deviceVendor: eldDetails?.vendor || null,
           driverFirstName: driverDoc?.firstName || '',
           driverLastName: driverDoc?.lastName || '',
@@ -884,7 +960,7 @@ export class AppController extends BaseController {
               eldNo: eldDetails?.eldNo || null,
               deviceVersion: eldDetails?.deviceVersion || '',
               deviceModel: eldDetails?.deviceName || '',
-              deviceSerialNo: eldDetails?.serialNo || null,
+              deviceSerialNo: eldDetails?.serialNo || '',
               deviceVendor: eldDetails?.vendor || null,
               manualVehicleId: vehicleDetails?.data?.vehicleId || null,
               vehicleId: vehicleDetails?.data?.id || null,
@@ -899,18 +975,29 @@ export class AppController extends BaseController {
             coDriverData = {
               driverId: requestedCoDriver.id,
               coDriverId: driverDoc._id || null,
-              deviceId: eldDetails?.id || null,
-              eldNo: eldDetails?.eldNo || null,
-              deviceVersion: eldDetails?.deviceVersion || '',
-              deviceModel: eldDetails?.deviceName || '',
-              deviceSerialNo: eldDetails?.serialNo || null,
-              deviceVendor: eldDetails?.vendor || null,
-              manualVehicleId: vehicleDetails?.data?.vehicleId || null,
-              vehicleId: vehicleDetails?.data?.id || null,
-              vehicleLicensePlateNo:
-                vehicleDetails?.data?.licensePlateNo || null,
-              vehicleMake: vehicleDetails?.data?.make || null,
-              vehicleVinNo: vehicleDetails?.data?.vinNo || null,
+              // deviceId: eldDetails?.id || null,
+              // eldNo: eldDetails?.eldNo || null,
+              // deviceVersion: eldDetails?.deviceVersion || '',
+              // deviceModel: eldDetails?.deviceName || '',
+              // deviceSerialNo: eldDetails?.serialNo || null,
+              // deviceVendor: eldDetails?.vendor || null,
+              // manualVehicleId: vehicleDetails?.data?.vehicleId || null,
+              // vehicleId: vehicleDetails?.data?.id || null,
+              // vehicleLicensePlateNo:
+              //   vehicleDetails?.data?.licensePlateNo || null,
+              // vehicleMake: vehicleDetails?.data?.make || null,
+              // vehicleVinNo: vehicleDetails?.data?.vinNo || null,
+              deviceId: null,
+              eldNo: null,
+              deviceVersion: '',
+              deviceModel: '',
+              deviceSerialNo: '',
+              deviceVendor: null,
+              manualVehicleId: null,
+              vehicleId: null,
+              vehicleLicensePlateNo: null,
+              vehicleMake: null,
+              vehicleVinNo: null,
             };
             // Co Driver Unit update
             await this.appService.updateCoDriverUnit(coDriverData);
@@ -997,7 +1084,7 @@ export class AppController extends BaseController {
           eldNo: null,
           deviceVersion: '',
           deviceModel: '',
-          deviceSerialNo: null,
+          deviceSerialNo: '',
           deviceVendor: null,
         };
         await this.appService.updateStatusInUnitService(id, dataUpdate);
@@ -1020,7 +1107,144 @@ export class AppController extends BaseController {
       throw error;
     }
   }
+  @GetDefaultDecorators()
+  async getDefaultDrivers(
+    @Query(new ListingParamsValidationPipe()) queryParams: ListingParams,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    try {
+      const options: FilterQuery<DriverDocument> = {};
+      // const options = {};
+      const { search, orderBy, orderType, pageNo, limit } = queryParams;
+      const { tenantId: id, timeZone } =
+        request.user ?? ({ tenantId: undefined } as any);
 
+      let isActive = queryParams?.isActive;
+      const arr = [];
+      arr.push(isActive);
+      if (arr.includes('true')) {
+        isActive = true;
+      } else {
+        isActive = false;
+      }
+      // options['$and']=[{tenantId:id}]
+      if (search) {
+        options['$or'] = [];
+        if (Types.ObjectId.isValid(search)) {
+          searchableIds.forEach((attribute) => {
+            options['$or'].push({ [attribute]: new RegExp(search, 'i') });
+          });
+        }
+        searchableAtrributes.forEach((attribute) => {
+          options['$or'].push({ [attribute]: new RegExp(search, 'i') });
+        });
+        if (arr[0]) {
+          options['$and'] = [];
+          options['$and'] = [{ tenantId: id }];
+          isActiveinActive.forEach((attribute) => {
+            options.$and.push({ [attribute]: isActive });
+          });
+        }
+      } else {
+        if (arr[0]) {
+          options['$or'] = [];
+          isActiveinActive.forEach((attribute) => {
+            options.$or.push({ [attribute]: isActive });
+          });
+        }
+      }
+      if (options.hasOwnProperty('$and')) {
+        options['$and'].push({ tenantId: id });
+      } else {
+        options['$and'] = [{ tenantId: id }];
+      }
+      const query = this.appService.find(options);
+
+      if (orderBy && sortableAttributes.includes(orderBy)) {
+        query.collation({ locale: 'en' }).sort({ [orderBy]: orderType ?? 1 });
+      } else {
+        query.sort({ createdAt: 1 });
+      }
+
+      const total = await this.appService.count(options);
+      let queryResponse;
+      if (!limit || !isNaN(limit)) {
+        query.skip(((pageNo ?? 1) - 1) * (limit ?? 10)).limit(limit ?? 10);
+      }
+      queryResponse = await query.exec();
+      const driverList: DriverResponse[] = [];
+      for (const driver of queryResponse) {
+        let vehicle;
+        const jsonUser = driver.toJSON();
+        if (driver?.vehicleId) {
+          vehicle = await this.appService.populateVehicle(
+            driver.vehicleId.toString(),
+          );
+          if (vehicle.status === 200) {
+            jsonUser.vehicleId = vehicle.data || null;
+
+            if (
+              jsonUser.coDriverId &&
+              Object.keys(jsonUser.coDriverId).length > 0
+            ) {
+              const coDriver = new DriverResponse(jsonUser.coDriverId);
+              coDriver.id = driver.coDriverId.id;
+              jsonUser.coDriverId = coDriver;
+            }
+          }
+        }
+        const office = await this.appService.populateOffices(
+          driver.homeTerminalAddress.toString(),
+        );
+
+        if (driver.id) {
+          const unitInfo = await this.appService.populateUnit(driver.id);
+          if (unitInfo.status === 200 && unitInfo.data.lastActivityDate) {
+            jsonUser.lastActivityDate = unitInfo.data.lastActivityDate;
+            jsonUser.lastActivityDate = moment(
+              unitInfo.data.meta.lastActivity.currentDate +
+                unitInfo.data.meta.lastActivity.currentTime,
+              'MMDDYYHHmmss',
+            );
+            // jsonUser.deviceVersion = unitInfo.data.deviceVersion || '';
+            jsonUser.eldType = unitInfo.data.eldType || '';
+            // jsonUser.deviceModel = unitInfo.data.deviceModel || '';
+          }
+        }
+        if (timeZone?.tzCode) {
+          jsonUser.createdAt = moment
+            .tz(jsonUser.createdAt, timeZone?.tzCode)
+            .format('DD/MM/YYYY h:mm a');
+        }
+        jsonUser.id = driver.id;
+        jsonUser.homeTerminalAddress = office.data;
+
+        driverList.push(new DriverResponse(jsonUser));
+
+        // driverList.push(jsonUser);
+
+        // else {
+        //   console.log(`Checking total --------------- `, total);
+        //   total = total - 1;
+        // }
+      }
+      return response.status(HttpStatus.OK).send({
+        data: driverList,
+        total,
+        pageNo: pageNo ?? 1,
+        last_page: Math.ceil(
+          total /
+            (limit && limit.toString().toLowerCase() === 'all'
+              ? total
+              : limit ?? 10),
+        ),
+      });
+    } catch (error) {
+      Logger.error({ message: error.message, stack: error.stack });
+      throw error;
+    }
+  }
   @GetDecorators()
   async getDrivers(
     @Query(new ListingParamsValidationPipe()) queryParams: ListingParams,
@@ -1121,9 +1345,9 @@ export class AppController extends BaseController {
                 unitInfo.data.meta.lastActivity.currentTime,
               'MMDDYYHHmmss',
             );
-            jsonUser.deviceVersion = unitInfo.data.deviceVersion || '';
+            // jsonUser.deviceVersion = unitInfo.data.deviceVersion || '';
             jsonUser.eldType = unitInfo.data.eldType || '';
-            jsonUser.deviceModel = unitInfo.data.deviceModel || '';
+            // jsonUser.deviceModel = unitInfo.data.deviceModel || '';
           }
         }
         if (timeZone?.tzCode) {
@@ -1170,8 +1394,6 @@ export class AppController extends BaseController {
     try {
       const driver = await this.appService.findOne({ _id: { $eq: id } });
 
-    
-      
       let previousToken = driver.get('deviceToken', String);
       if (previousToken) {
         //if its not first time login
@@ -1437,5 +1659,22 @@ export class AppController extends BaseController {
     }
 
     return driver ?? exception;
+  }
+  @UseInterceptors(new MessagePatternResponseInterceptor())
+  @MessagePattern({ cmd: 'get_drivers_by_vehicleIds' })
+  async tcp_getDriversByVehicleIds(vehicleIds: []): Promise<any> {
+    try {
+      const response = await this.appService.findDriversByVehicleIds(
+        vehicleIds,
+      );
+
+      return response;
+    } catch (error) {
+      return {
+        statusCode: 400,
+        message: error.message,
+        data: [],
+      };
+    }
   }
 }

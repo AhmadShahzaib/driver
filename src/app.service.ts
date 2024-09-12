@@ -116,19 +116,33 @@ export class AppService extends BaseService<DriverDocument> {
           { isDeleted: false, isActive: true },
           {
             $or: [
-              { email: { $regex: new RegExp(`^${userName}$`, 'i') } },
               { userName: { $regex: new RegExp(`^${userName}$`, 'i') } },
-              { phoneNumber: { $regex: new RegExp(`^${userName}$`, 'i') } },
+            
+             
             ],
           },
         ],
       };
       this.logger.log(`check Driver exist or not`);
       const driver = await this.driverModel.findOne(option).exec();
+      
       if (!driver) {
         this.logger.log(`The login userName you entered is incorrect. `);
         return Promise.resolve(
           new NotFoundException('The login email you entered is incorrect'),
+        );
+      }
+      this.logger.log(`driver found`);
+      const jsonDriver = driver.toJSON();
+      jsonDriver.id = driver.id;
+      Logger.log(jsonDriver.password);
+      const passwordMatch = await compare(password, jsonDriver.password);
+      Logger.log("password match ",passwordMatch);
+
+      if (!passwordMatch) {
+        this.logger.log(`password not match`);
+        return Promise.resolve(
+          new UnauthorizedException('The password you entered is incorrect.'),
         );
       }
       let previousToken = driver.get('deviceToken', String);
@@ -206,6 +220,7 @@ export class AppService extends BaseService<DriverDocument> {
           );
         }
         if (deviceModel) {
+          Logger.log("model will be updated here----->",deviceModel)
           await this.driverModel.findByIdAndUpdate(
             driver.id,
             { $set: { deviceModel: deviceModel } },
@@ -215,16 +230,7 @@ export class AppService extends BaseService<DriverDocument> {
           );
         }
       }
-      this.logger.log(`driver found`);
-      const jsonDriver = driver.toJSON();
-      jsonDriver.id = driver.id;
-      const passwordMatch = await compare(password, jsonDriver.password);
-      if (!passwordMatch) {
-        this.logger.log(`password not match`);
-        return Promise.resolve(
-          new UnauthorizedException('The password you entered is incorrect.'),
-        );
-      }
+     
       if (loggedIn) {
         return Promise.resolve(new NotFoundException('loggedIn'));
       }
@@ -259,11 +265,12 @@ export class AppService extends BaseService<DriverDocument> {
       }
       // driver.enableElog = "true"
       driver.password = await this.hashPassword(driver.password);
-      const result = await this.driverModel.findOneAndUpdate(
-        { email: driver.email },
-        driver,
-        { upsert: true, new: true },
-      );
+      // const result = await this.driverModel.findOneAndUpdate(
+      //   { email: driver.email },
+      //   driver,
+      //   { upsert: true, new: true },
+      // );
+      const result = await this.driverModel.create(driver);
       console.log('New Id' + result['_doc']['_id']);
       const driverId = result['_doc']['_id'];
       const recordMade = {
@@ -658,6 +665,21 @@ export class AppService extends BaseService<DriverDocument> {
       }
 
       return deviceTokens;
+    } catch (err) {
+      this.logger.error({ message: err.message, stack: err.stack });
+      throw err;
+    }
+  };
+
+  findDriversByVehicleIds = async (ids: []): Promise<any> => {
+    try {
+      const driverQuery = await this.driverModel.find({
+        currentVehicle: {
+          $in: ids,
+        },
+      });
+
+      return driverQuery;
     } catch (err) {
       this.logger.error({ message: err.message, stack: err.stack });
       throw err;
