@@ -309,7 +309,7 @@ export class AppController extends BaseController {
       } else {
         Logger.debug(`Driver against id: ${id} not found`);
       }
-
+      const unitData = await this.appService.getUnitById(id)
       if (driver && Object.keys(driver).length > 0) {
         if (driver.homeTerminalAddress) {
           Logger.log(`want to populate the Office`);
@@ -344,6 +344,7 @@ export class AppController extends BaseController {
         const driverResponse: DriverResponse = new DriverResponse(driverJson);
 
         if (driverResponse) {
+          driverResponse["meta"]= unitData?.data?.meta;
           Logger.log(`Driver found`);
           //log about the response that response is being sent
           return res.status(HttpStatus.OK).send({
