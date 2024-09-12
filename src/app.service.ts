@@ -253,7 +253,7 @@ export class AppService extends BaseService<DriverDocument> {
   getUnitById = async (id) => {
     try {
       const res = await firstValueFrom(
-        this.unitClient.send({ cmd: 'get_assigned_driver_eld_SerialNo' }, id),
+        this.unitClient.send({ cmd: 'get_unit_by_driverId' }, id),
       );
       if (res.isError) {
         Logger.log('Error in getting Device Serial No from Unit Service');
